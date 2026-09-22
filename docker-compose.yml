@@ -1,0 +1,24 @@
+services:
+  ocpp-server:
+    build: .
+    container_name: ocpp-central-system
+    ports:
+      - "9000:9000"
+    volumes:
+      - ocpp-data:/app/data
+    restart: unless-stopped
+    # Production (เช่น Coolify) ควรตั้งค่า environment variables เหล่านี้:
+    #   ENVIRONMENT=production   (บังคับให้ต้องตั้ง JWT_SECRET ไม่งั้น start ไม่ขึ้น)
+    #   JWT_SECRET=<ค่าสุ่มยาวๆ ที่เก็บเป็นความลับ>
+    #   ADMIN_USERNAME=<username แอดมินเริ่มต้น>
+    #   ADMIN_PASSWORD=<password แอดมินเริ่มต้น>
+    #   BACKUP_INTERVAL_HOURS=<ความถี่ auto-backup เป็นชั่วโมง ค่า default 24>
+    #   BACKUP_RETENTION_COUNT=<จำนวนไฟล์ backup ล่าสุดที่เก็บไว้ ค่า default 7>
+    # environment:
+    #   - ENVIRONMENT=production
+    #   - JWT_SECRET=change-me-to-a-long-random-secret
+    #   - ADMIN_USERNAME=admin
+    #   - ADMIN_PASSWORD=change-me
+
+volumes:
+  ocpp-data:

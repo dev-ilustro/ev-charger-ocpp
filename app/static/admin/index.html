@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin - OCPP 1.6J Central System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../style.css?v=8" />
+  <link rel="stylesheet" href="admin.css?v=2" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-brand">
+        <p class="brand-title">
+          ⚡ OCPP Central
+          <span class="version-badge" id="version-badge">v1.0</span>
+        </p>
+        <p class="brand-subtitle">EV Charger Management</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="../" class="nav-item">📊 Dashboard</a>
+
+        <p class="nav-section-label">Admin</p>
+        <button class="nav-item active" data-tab="settings-tab">⚙️ ตั้งค่าระบบ</button>
+        <button class="nav-item" data-tab="changelog-tab">📝 Change Log</button>
+        <button class="nav-item" data-tab="users-tab">👤 ผู้ใช้งาน</button>
+        <button class="nav-item" data-tab="cards-tab">💳 RFID Cards</button>
+        <button class="nav-item" data-tab="charge-points-tab">🔌 เครื่องชาร์จ</button>
+        <button class="nav-item" data-tab="card-taps-tab">🪪 ประวัติแตะบัตร</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user" id="sidebar-user" style="display:none">
+          <div class="avatar" id="user-avatar"></div>
+          <div class="info">
+            <div class="username" id="user-username"></div>
+            <div class="role" id="user-role"></div>
+          </div>
+        </div>
+        <button id="logout-btn" class="sidebar-logout" style="display:none">🚪 ออกจากระบบ</button>
+      </div>
+    </aside>
+
+    <div class="main-area">
+      <div class="topbar">
+        <div class="topbar-left">
+          <button id="menu-toggle" class="menu-toggle" aria-label="เปิดเมนู">☰</button>
+          <h2 id="page-title">ตั้งค่าระบบ</h2>
+        </div>
+      </div>
+
+      <main class="content">
+        <!-- แสดงถ้า login แล้วแต่ role ไม่ใช่ admin -->
+        <section id="denied-section" style="display:none">
+          <div class="card">
+            <h2>ไม่มีสิทธิ์เข้าถึง</h2>
+            <p>หน้านี้สำหรับผู้ดูแลระบบ (admin) เท่านั้น</p>
+          </div>
+        </section>
+
+        <section id="admin-section" style="display:none">
+          <div id="settings-tab" class="tab-panel">
+            <div class="card">
+              <form id="settings-form" class="form-grid">
+                <label>ชื่อระบบ (แสดงบน Dashboard)
+                  <input type="text" id="setting-system-name" required />
+                </label>
+                <label>Heartbeat Interval (วินาที)
+                  <input type="number" id="setting-heartbeat" min="10" required />
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="setting-auto-accept" />
+                  Auto-accept บัตร RFID ที่ยังไม่ได้ลงทะเบียน (โหมด dev/ทดสอบก่อนลงทะเบียนบัตรจริง)
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="setting-lock-until-authorized" />
+                  ล็อคเครื่อง (Inoperative) จนกว่าจะแตะบัตรที่ลงทะเบียนแล้วผ่านก่อนถึงจะใช้งานได้ (สั่ง Operative
+                  อัตโนมัติหลังแตะบัตรผ่าน แล้วล็อคคืนหลังจบการชาร์จ หรือถ้าแตะบัตรแล้วไม่เริ่มชาร์จภายใน 90 วินาที)
+                </label>
+                <label>ราคาค่าไฟ (บาท/kWh)
+                  <input type="number" id="setting-price-per-kwh" min="0" step="0.01" required />
+                  <span style="font-size:12px; color:var(--muted)">ใช้คำนวณหักเงินจาก wallet ลูกค้าอัตโนมัติเมื่อจบการชาร์จ</span>
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="setting-allow-mock-topup" />
+                  อนุญาตให้ลูกค้าเติมเงินเข้า wallet เองได้ (โหมดทดสอบ ยังไม่ผูก payment gateway จริง เงินไม่เคลื่อนไหวจริง —
+                  เปิดไว้เฉพาะตอนทดสอบเท่านั้น)
+                </label>
+                <p id="settings-msg" class="form-msg" style="display:none"></p>
+                <button type="submit">บันทึกการตั้งค่า</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>Export ฐานข้อมูล</h3>
+              </div>
+              <p style="font-size:13px; color:var(--muted); margin:0 0 12px">
+                ดาวน์โหลดสำเนาฐานข้อมูลปัจจุบันทั้งหมด (สำเนานี้จะถูกเก็บไว้ในเซิร์ฟเวอร์ด้วยและอยู่ในรายการด้านล่าง)
+              </p>
+              <a href="/api/admin/backup/export"><button type="button">Export ตอนนี้</button></a>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>รายการ Backup</h3>
+                <button type="button" class="secondary" onclick="loadBackups()">รีเฟรช</button>
+              </div>
+              <div class="table-responsive">
+                <table id="backups-table">
+                  <thead>
+                    <tr>
+                      <th>ไฟล์</th>
+                      <th>ขนาด</th>
+                      <th>สร้างเมื่อ</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="backups-body">
+                    <tr><td colspan="4">กำลังโหลด...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3>Restore ฐานข้อมูล</h3>
+              </div>
+              <p class="form-error" style="margin:0 0 12px">
+                คำเตือน: การ Restore จะเขียนทับข้อมูลปัจจุบันทั้งหมดด้วยข้อมูลในไฟล์ที่อัพโหลด
+                ระบบจะสำรองข้อมูลปัจจุบันไว้ให้อัตโนมัติก่อน restore ทุกครั้ง (กู้คืนได้จากรายการ Backup ด้านบน)
+              </p>
+              <form id="restore-form" class="form-grid">
+                <label>เลือกไฟล์ .db ที่จะ restore
+                  <input type="file" id="restore-file" accept=".db" required />
+                </label>
+                <label>พิมพ์ RESTORE เพื่อยืนยัน
+                  <input type="text" id="restore-confirm" placeholder="RESTORE" required />
+                </label>
+                <p id="restore-msg" class="form-msg" style="display:none"></p>
+                <button type="submit" class="danger" id="restore-submit-btn">Restore ฐานข้อมูล</button>
+              </form>
+            </div>
+          </div>
+
+          <div id="changelog-tab" class="tab-panel" style="display:none">
+            <div class="card">
+              <form id="changelog-form" class="form-grid inline-form">
+                <input type="text" id="changelog-version" placeholder="เวอร์ชัน เช่น v1.1" required />
+                <input type="text" id="changelog-description" placeholder="รายละเอียดการเปลี่ยนแปลง" required />
+                <button type="submit">เพิ่ม</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="table-responsive">
+                <table id="changelog-table">
+                  <thead>
+                    <tr>
+                      <th>เวอร์ชัน</th>
+                      <th>รายละเอียด</th>
+                      <th>วันที่</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="changelog-body">
+                    <tr><td colspan="4">กำลังโหลด...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="users-tab" class="tab-panel" style="display:none">
+            <div class="card">
+              <div class="card-header">
+                <h3>รายชื่อผู้ใช้งาน <span id="users-count" class="count-badge"></span></h3>
+                <button type="button" onclick="openAddUserDialog()">+ เพิ่มผู้ใช้งาน</button>
+              </div>
+              <div class="table-toolbar">
+                <input type="text" id="users-search" class="search-input" placeholder="ค้นหา username, ชื่อ, อีเมล..." />
+                <select id="users-role-filter">
+                  <option value="">ทุก Role</option>
+                  <option value="admin">admin</option>
+                  <option value="staff">staff</option>
+                  <option value="customer">customer</option>
+                </select>
+              </div>
+              <div class="table-responsive">
+                <table id="users-table">
+                  <thead>
+                    <tr>
+                      <th>ผู้ใช้</th>
+                      <th>ติดต่อ</th>
+                      <th>สิทธิ์</th>
+                      <th>สถานะ</th>
+                      <th>ยอดเงินคงเหลือ</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="users-body">
+                    <tr><td colspan="6">กำลังโหลด...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="cards-tab" class="tab-panel" style="display:none">
+            <div class="card">
+              <form id="card-form" class="form-grid">
+                <label>Card UID (ค่าที่เครื่องชาร์จส่งเป็น idTag)
+                  <input type="text" id="card-uid" required />
+                </label>
+                <label>ค้นหา User (Username หรือ ชื่อ-นามสกุล)
+                  <input type="text" id="card-user-search" autocomplete="off" placeholder="พิมพ์เพื่อค้นหา..." required />
+                </label>
+                <div id="card-user-results" class="autocomplete-results" style="display:none"></div>
+                <input type="hidden" id="card-user-id" />
+                <p id="card-msg" class="form-msg" style="display:none"></p>
+                <button type="submit">เพิ่มบัตร</button>
+              </form>
+            </div>
+
+            <div class="card">
+              <div class="table-responsive">
+                <table id="cards-table">
+                  <thead>
+                    <tr>
+                      <th>Card UID</th>
+                      <th>User</th>
+                      <th>สถานะ</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="cards-body">
+                    <tr><td colspan="4">กำลังโหลด...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="charge-points-tab" class="tab-panel" style="display:none">
+            <div class="card">
+              <div class="card-header">
+                <h3>เครื่องชาร์จที่ลงทะเบียนในระบบ</h3>
+                <button type="button" class="secondary" onclick="loadChargePointsAdmin()">รีเฟรช</button>
+              </div>
+              <p style="font-size:12px; color:var(--muted); margin:0 0 12px">
+                รายการนี้มาจากเครื่องที่เคยเชื่อมต่อเข้ามาแล้ว (auto-register ตอน BootNotification) ไม่สามารถเพิ่มเองได้
+                ถ้าลบเครื่องที่ยังเชื่อมต่อ/online อยู่ ระบบจะสร้างรายการใหม่ให้อัตโนมัติเมื่อได้รับข้อความถัดไปจากเครื่องนั้น
+              </p>
+              <div class="table-responsive">
+                <table id="charge-points-table">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>สถานะ</th>
+                      <th>ยี่ห้อ / รุ่น</th>
+                      <th>Connector</th>
+                      <th>Heartbeat ล่าสุด</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="charge-points-body">
+                    <tr><td colspan="6">กำลังโหลด...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div id="card-taps-tab" class="tab-panel" style="display:none">
+            <div class="card">
+              <div class="card-header">
+                <h3>ประวัติการแตะบัตร (Authorize)</h3>
+                <button type="button" class="secondary" onclick="loadCardTaps()">รีเฟรช</button>
+              </div>
+              <p style="font-size:12px; color:var(--muted); margin:0 0 12px">
+                บันทึกทุกครั้งที่เครื่องชาร์จส่ง Authorize มาตรวจสอบบัตร (แสดงล่าสุด 200 รายการ)
+              </p>
+              <div class="table-responsive">
+                <table id="card-taps-table">
+                  <thead>
+                    <tr>
+                      <th>เวลา</th>
+                      <th>เครื่องชาร์จ</th>
+                      <th>Card UID</th>
+                      <th>User</th>
+                      <th>ผลลัพธ์</th>
+                    </tr>
+                  </thead>
+                  <tbody id="card-taps-body">
+                    <tr><td colspan="5">กำลังโหลด...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="page-footer">
+        Powered by EV Ilustro <span id="footer-version">v1.0</span>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Modal สำหรับเพิ่มผู้ใช้งานใหม่ -->
+  <dialog id="add-user-dialog">
+    <div class="detail-dialog-header">
+      <h3>เพิ่มผู้ใช้งานใหม่</h3>
+      <button class="icon-btn" type="button" onclick="document.getElementById('add-user-dialog').close()">✕</button>
+    </div>
+    <form id="user-form" class="form-grid compact-grid">
+      <label>Username
+        <input type="text" id="user-username-input" required />
+      </label>
+      <label>Password
+        <input type="password" id="user-password" required minlength="6" />
+      </label>
+      <label>ชื่อ-นามสกุล
+        <input type="text" id="user-fullname" />
+      </label>
+      <label>อีเมล
+        <input type="text" id="user-email" />
+      </label>
+      <label>เบอร์โทร
+        <input type="text" id="user-phone" />
+      </label>
+      <label>Role
+        <select id="user-role-select">
+          <option value="customer">customer</option>
+          <option value="staff">staff</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+      <button type="submit">เพิ่ม User</button>
+    </form>
+  </dialog>
+
+  <!-- Modal สำหรับแก้ไขผู้ใช้งาน -->
+  <dialog id="edit-user-dialog">
+    <form method="dialog" id="edit-user-form" class="form-grid">
+      <h3 style="margin:0 0 4px">แก้ไขผู้ใช้งาน: <span id="edit-user-username"></span></h3>
+      <label>ชื่อ-นามสกุล
+        <input type="text" id="edit-user-fullname" />
+      </label>
+      <label>อีเมล
+        <input type="text" id="edit-user-email" />
+      </label>
+      <label>เบอร์โทร
+        <input type="text" id="edit-user-phone" />
+      </label>
+      <label>Role
+        <select id="edit-user-role">
+          <option value="customer">customer</option>
+          <option value="staff">staff</option>
+          <option value="admin">admin</option>
+        </select>
+      </label>
+      <label>รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)
+        <input type="password" id="edit-user-password" minlength="6" />
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" id="edit-user-active" />
+        เปิดใช้งานบัญชีนี้
+      </label>
+      <p id="edit-user-msg" class="form-msg" style="display:none"></p>
+      <menu>
+        <button value="cancel" class="secondary">ยกเลิก</button>
+        <button value="confirm" id="edit-user-save">บันทึก</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Modal สำหรับเติมเงินเข้า wallet -->
+  <dialog id="topup-wallet-dialog">
+    <div class="detail-dialog-header">
+      <h3>เติมเงิน: <span id="topup-username"></span></h3>
+      <button class="icon-btn" type="button" onclick="document.getElementById('topup-wallet-dialog').close()">✕</button>
+    </div>
+    <form id="topup-wallet-form" class="form-grid compact-grid">
+      <label>ยอดเงินปัจจุบัน: <strong id="topup-current-balance"></strong></label>
+      <label>จำนวนเงินที่เติม (บาท)
+        <input type="number" id="topup-amount" min="0.01" step="0.01" required />
+      </label>
+      <label>หมายเหตุ (ไม่บังคับ)
+        <input type="text" id="topup-note" placeholder="เช่น รับเงินสดหน้าเคาน์เตอร์" />
+      </label>
+      <p id="topup-msg" class="form-msg" style="display:none"></p>
+      <button type="submit">เติมเงิน</button>
+    </form>
+  </dialog>
+
+  <!-- Modal สำหรับแก้ไขบัตร RFID -->
+  <dialog id="edit-card-dialog">
+    <div class="detail-dialog-header">
+      <h3>แก้ไขบัตร: <span id="edit-card-uid"></span></h3>
+      <button class="icon-btn" type="button" onclick="document.getElementById('edit-card-dialog').close()">✕</button>
+    </div>
+    <form id="edit-card-form" class="form-grid compact-grid">
+      <label>ค้นหา User (Username หรือ ชื่อ-นามสกุล)
+        <input type="text" id="edit-card-user-search" autocomplete="off" placeholder="พิมพ์เพื่อค้นหา..." required />
+      </label>
+      <div id="edit-card-user-results" class="autocomplete-results" style="display:none"></div>
+      <input type="hidden" id="edit-card-user-id" />
+      <label class="checkbox-label">
+        <input type="checkbox" id="edit-card-active" />
+        เปิดใช้งานบัตรนี้
+      </label>
+      <p id="edit-card-msg" class="form-msg" style="display:none"></p>
+      <button type="submit">บันทึก</button>
+    </form>
+  </dialog>
+
+  <script src="admin.js?v=15"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+.form-grid {
+  max-width: 420px;
+}
+
+.form-grid.inline-form {
+  max-width: none;
+}
+
+.form-grid button {
+  align-self: flex-start;
+}

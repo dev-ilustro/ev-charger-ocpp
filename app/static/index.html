@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OCPP 1.6J Central System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=11" />
+</head>
+<body>
+  <div class="mobile-header">
+    <div class="brand">
+      ⚡ OCPP Central
+      <span class="version-badge" id="version-badge">v1.0</span>
+    </div>
+    <div class="mobile-header-actions">
+      <span id="status-pill" class="badge offline">กำลังโหลด...</span>
+      <button id="refresh-btn" class="icon-btn">🔄</button>
+    </div>
+  </div>
+
+  <main class="app-content">
+    <!-- ========== หน้าแรก ========== -->
+    <section class="screen active" id="screen-home" data-screen="home">
+      <div class="overview-strip" id="overview-strip"></div>
+
+      <div class="card" id="wallet-home-summary" style="display:none; padding:14px 16px; cursor:pointer" onclick="switchScreen('settings')">
+        <div style="display:flex; align-items:center; justify-content:space-between">
+          <span style="color:var(--text-secondary); font-size:13px">💰 ยอดเงินคงเหลือ (แตะเพื่อเติมเงิน/ตั้งงบ)</span>
+          <strong id="wallet-home-chip-value" style="font-family:var(--font-mono); font-size:18px">-</strong>
+        </div>
+      </div>
+
+      <div id="cp-list">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    </section>
+
+    <!-- ========== รายละเอียดเครื่องชาร์จ ========== -->
+    <section class="screen" id="screen-detail" data-screen="detail">
+      <div class="screen-header">
+        <button class="back-btn" onclick="closeDetailScreen()" aria-label="กลับ">←</button>
+        <div style="flex:1; min-width:0">
+          <h2 style="margin-bottom:4px">เครื่องชาร์จ: <span id="detail-cp-id">-</span></h2>
+          <div id="detail-status-badges"></div>
+        </div>
+      </div>
+
+      <div id="detail-info-grid" class="info-grid card"></div>
+
+      <div id="live-charging-section" class="card" style="display:none">
+        <div class="card-header">
+          <h4>⚡ กำลังชาร์จตอนนี้</h4>
+        </div>
+        <div class="stat-grid" id="live-charging-grid"></div>
+      </div>
+
+      <div class="card" id="detail-actions-card">
+        <div class="card-header">
+          <h4>คำสั่ง</h4>
+        </div>
+        <div class="device-card-actions">
+          <button id="detail-start-btn" onclick="detailStartCharging()">เริ่มชาร์จ</button>
+          <button id="detail-stop-btn" class="danger" onclick="detailStopCharging()">หยุดชาร์จ</button>
+          <button id="detail-unlock-btn" class="secondary" onclick="unlockConnector(currentDetailCpId)">ปลดล็อคหัวชาร์จ</button>
+          <button id="detail-reset-btn" class="secondary" onclick="resetCp(currentDetailCpId, 'Soft')">รีเซ็ต</button>
+        </div>
+      </div>
+
+      <div class="card admin-only-section">
+        <div class="card-header">
+          <h4>ควบคุมสถานะ Availability</h4>
+        </div>
+        <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px">
+          ใช้บังคับปลด/ล็อคเครื่องด้วยมือ เผื่อระบบล็อคอัตโนมัติ (ล็อคจนกว่าจะแตะบัตร) ค้างหรือทำงานผิดปกติ
+        </p>
+        <button id="availability-operative-btn" onclick="setAvailability('Operative')">บังคับ Operative (ปลดล็อค)</button>
+        <button id="availability-inoperative-btn" class="secondary" onclick="setAvailability('Inoperative')">บังคับ Inoperative (ล็อค)</button>
+        <p id="availability-status" class="form-msg" style="display:none"></p>
+      </div>
+
+      <div class="card admin-only-section">
+        <div class="card-header">
+          <h4>ป้องกันเครื่องปลดล็อคหัวชาร์จเองอัตโนมัติ</h4>
+        </div>
+        <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px">
+          รถ EV บางรุ่นสั่งให้เครื่องชาร์จปลดล็อคหัวชาร์จเองทันทีที่ชาร์จเสร็จ โดยไม่รอคำสั่งจาก Server
+          ทำให้ระบบ "ต้องชำระเงินก่อนปลดล็อค" ถูกข้ามได้ ปุ่มนี้จะสั่งปิด configuration key มาตรฐาน OCPP
+          <code>UnlockConnectorOnEVSideDisconnect</code> (ตั้งเป็น false) เพื่อให้เครื่องรอคำสั่งปลดล็อคจาก
+          Server เท่านั้น — ใช้ได้เฉพาะเครื่องที่รองรับ key นี้ (บางรุ่นอาจไม่มีให้ตั้ง)
+        </p>
+        <button class="secondary" onclick="disableAutoUnlock(currentDetailCpId)">ปิด Auto-unlock (ตั้งค่ารอชำระเงิน)</button>
+        <p id="auto-unlock-status" class="form-msg" style="display:none"></p>
+      </div>
+
+      <div class="card admin-only-section">
+        <div class="card-header">
+          <h4>รีสตาร์ทเครื่อง</h4>
+        </div>
+        <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px">
+          Soft = restart เฉพาะ software ของเครื่อง (ตัดการชาร์จที่ทำอยู่ก่อนแล้วค่อย restart) <br />
+          Hard (Reboot) = รีบูตตัวเครื่องทั้งหมด เหมือนถอดปลั๊กแล้วเสียบใหม่ ใช้เมื่อเครื่องค้าง/ไม่ตอบสนอง
+        </p>
+        <button class="secondary" onclick="resetCp(currentDetailCpId, 'Soft')">Reset (Soft)</button>
+        <button class="danger" onclick="resetCp(currentDetailCpId, 'Hard')">Reboot (Hard Reset)</button>
+      </div>
+
+      <div class="card admin-only-section">
+        <div class="card-header">
+          <h4>OCPP Configuration</h4>
+          <button id="config-load-btn" onclick="loadConfiguration()">โหลดค่าปัจจุบัน</button>
+        </div>
+        <p id="config-status" class="form-msg" style="display:none"></p>
+        <div class="table-responsive">
+          <table id="config-table" style="display:none">
+            <thead>
+              <tr>
+                <th>Key</th>
+                <th>Value</th>
+                <th></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="config-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========== ประวัติการชาร์จ ========== -->
+    <section class="screen" id="screen-transactions" data-screen="transactions">
+      <div class="screen-header">
+        <h2>ประวัติการชาร์จ</h2>
+      </div>
+      <div class="chip-group" id="txn-cp-chips"></div>
+      <div class="chip-group" id="txn-range-chips"></div>
+      <div id="txn-list">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    </section>
+
+    <!-- ========== Log เหตุการณ์ ========== -->
+    <section class="screen" id="screen-events" data-screen="events">
+      <div class="screen-header">
+        <h2>Log เหตุการณ์</h2>
+      </div>
+      <div class="chip-group" id="events-cp-chips"></div>
+      <div id="events-list">
+        <div class="skeleton skeleton-card"></div>
+        <div class="skeleton skeleton-card"></div>
+      </div>
+    </section>
+
+    <!-- ========== ตั้งค่า (Phase 4) ========== -->
+    <section class="screen" id="screen-settings" data-screen="settings">
+      <div class="screen-header">
+        <h2>ตั้งค่า</h2>
+      </div>
+
+      <div class="card" id="wallet-card" style="display:none">
+        <div class="card-header">
+          <h3>กระเป๋าเงินของฉัน</h3>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card green">
+            <div class="stat-label">💰 ยอดเงินคงเหลือ</div>
+            <div class="stat-value" id="wallet-balance-value">-</div>
+          </div>
+        </div>
+        <div class="detail-section" id="wallet-topup-section" style="display:none">
+          <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px">
+            เติมเงินเข้ากระเป๋า (⚠️ โหมดทดสอบ ยังไม่เชื่อมระบบชำระเงินจริง เงินไม่ได้เคลื่อนไหวจริง)
+          </p>
+          <label>จำนวนเงิน (บาท)
+            <input type="number" id="wallet-topup-input" min="0.01" step="0.01" style="width:140px" />
+          </label>
+          <button onclick="topUpMyWallet()">เติมเงิน (ทดสอบ)</button>
+          <p id="wallet-topup-msg" class="form-msg" style="display:none"></p>
+        </div>
+        <div class="detail-section">
+          <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px">
+            ตั้งงบสำหรับการชาร์จครั้งถัดไป (ไม่ตั้งไว้ = ชาร์จได้จนกว่าเงินใน wallet จะหมด)
+          </p>
+          <p id="wallet-current-budget" style="font-size:13px; margin:0 0 8px"></p>
+          <label>งบ (บาท)
+            <input type="number" id="wallet-budget-input" min="0.01" step="0.01" style="width:140px" />
+          </label>
+          <button onclick="saveMyBudget()">บันทึกงบ</button>
+          <button class="secondary" onclick="clearMyBudget()">ล้างงบ (ชาร์จจนกว่าเงินจะหมด)</button>
+          <p id="wallet-budget-msg" class="form-msg" style="display:none"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="sidebar-user" id="sidebar-user" style="display:none; padding:0 0 14px">
+          <div class="avatar" id="user-avatar"></div>
+          <div class="info">
+            <div class="username" id="user-username" style="color:var(--text-primary)"></div>
+            <div class="role" id="user-role"></div>
+          </div>
+        </div>
+        <button id="logout-btn" class="danger" style="display:none">🚪 ออกจากระบบ</button>
+      </div>
+      <div id="admin-nav-section" class="card" style="display:none">
+        <div class="card-header"><h3>Admin</h3></div>
+        <a href="admin/?tab=settings-tab" class="nav-item">⚙️ ตั้งค่าระบบ</a>
+        <a href="admin/?tab=changelog-tab" class="nav-item">📝 Change Log</a>
+        <a href="admin/?tab=users-tab" class="nav-item">👤 ผู้ใช้งาน</a>
+        <a href="admin/?tab=cards-tab" class="nav-item">💳 RFID Cards</a>
+        <a href="admin/?tab=charge-points-tab" class="nav-item">🔌 เครื่องชาร์จ</a>
+        <a href="admin/?tab=card-taps-tab" class="nav-item">🪪 ประวัติแตะบัตร</a>
+      </div>
+    </section>
+  </main>
+
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active" data-screen="home" onclick="switchScreen('home')">
+      <span class="icon">🏠</span>หน้าแรก
+    </button>
+    <button class="bottom-nav-item" data-screen="transactions" onclick="switchScreen('transactions')">
+      <span class="icon">📜</span>ประวัติ
+    </button>
+    <button class="bottom-nav-item" id="nav-events-btn" data-screen="events" onclick="switchScreen('events')" style="display:none">
+      <span class="icon">🧾</span>Log
+    </button>
+    <button class="bottom-nav-item" data-screen="settings" onclick="switchScreen('settings')">
+      <span class="icon">⚙️</span>ตั้งค่า
+    </button>
+  </nav>
+
+  <!-- Modal สำหรับสั่ง Remote Start (admin/staff) -->
+  <dialog id="start-dialog">
+    <form method="dialog" id="start-form">
+      <h3>เริ่มชาร์จระยะไกล</h3>
+      <label>Charge Point: <span id="start-cp-id"></span></label>
+      <label>ID Tag
+        <input type="text" id="start-id-tag" placeholder="เช่น TESTTAG001" required />
+      </label>
+      <label>Connector ID
+        <input type="number" id="start-connector-id" value="1" min="1" required />
+      </label>
+      <label>งบ (บาท, เว้นว่าง = ใช้ยอด wallet ทั้งหมด)
+        <input type="number" id="start-budget" min="0.01" step="0.01" />
+      </label>
+      <menu>
+        <button value="cancel" class="secondary">ยกเลิก</button>
+        <button id="start-confirm" value="confirm">เริ่มชาร์จ</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js?v=32"></script>
+</body>
+</html>

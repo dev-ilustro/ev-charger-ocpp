@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EV Charger | System Mockup</title>
+  <link rel="stylesheet" href="style.css?v=11" />
+  <style>
+    :root {
+      --mockup-bg: #0b1016;
+      --mockup-surface: #1a212b;
+      --mockup-surface-2: #141a22;
+      --mockup-border: #2a323e;
+      --mockup-text: #e8ecf1;
+      --mockup-muted: #8b95a5;
+      --mockup-primary: #0ea5e9;
+      --mockup-success: #22c55e;
+      --mockup-warning: #f59e0b;
+      --mockup-danger: #ef4444;
+      --mockup-teal: #0f8aaa;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      margin: 0;
+      background: #05080c;
+      color: var(--mockup-text);
+      font-family: "Prompt", "Segoe UI", Tahoma, sans-serif;
+    }
+
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+
+    .review-toolbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: #111820;
+      border-bottom: 1px solid #2b3541;
+      overflow-x: auto;
+    }
+
+    .review-toolbar-title {
+      flex: 0 0 auto;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .review-toolbar-title span {
+      display: block;
+      margin-top: 2px;
+      color: var(--mockup-muted);
+      font-size: 10px;
+      font-weight: 400;
+    }
+
+    .review-steps {
+      display: flex;
+      gap: 6px;
+      min-width: max-content;
+    }
+
+    .review-step {
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid #34404d;
+      border-radius: 8px;
+      background: #1a222c;
+      color: #9ba7b7;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .review-step.active {
+      border-color: var(--mockup-primary);
+      background: rgba(14, 165, 233, 0.14);
+      color: #fff;
+    }
+
+    .review-step.proposed::after {
+      content: "เพิ่มใหม่";
+      display: block;
+      margin-top: 1px;
+      color: var(--mockup-warning);
+      font-size: 8px;
+    }
+
+    .mockup-viewport {
+      min-height: calc(100vh - 59px);
+      background: var(--mockup-bg);
+    }
+
+    .mockup-screen { display: none; min-height: calc(100vh - 59px); }
+    .mockup-screen.active { display: block; }
+
+    .mockup-app {
+      display: flex;
+      flex-direction: column;
+      width: min(100%, 760px);
+      min-height: calc(100vh - 59px);
+      margin: 0 auto;
+      background: var(--mockup-bg);
+    }
+
+    .mockup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 58px;
+      padding: 12px 16px;
+      background: var(--mockup-surface);
+      border-bottom: 1px solid var(--mockup-border);
+    }
+
+    .mockup-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .mockup-version {
+      padding: 1px 7px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 999px;
+      color: var(--mockup-muted);
+      font-size: 10px;
+      font-weight: 500;
+    }
+
+    .mockup-header-actions { display: flex; align-items: center; gap: 8px; }
+
+    .mockup-online {
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: var(--mockup-surface-2);
+      color: #a5afbd;
+      font-size: 11px;
+      white-space: nowrap;
+    }
+
+    .mockup-header-icon {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 9px;
+      background: var(--mockup-surface-2);
+      color: var(--mockup-primary);
+    }
+
+    .mockup-content {
+      flex: 1;
+      padding: 14px 16px 92px;
+    }
+
+    .mockup-heading {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .mockup-back {
+      flex: 0 0 auto;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 10px;
+      background: var(--mockup-surface);
+      color: var(--mockup-text);
+      font-size: 18px;
+    }
+
+    .mockup-heading h1,
+    .mockup-heading h2 {
+      margin: 0;
+      color: #fff;
+      font-size: 20px;
+      line-height: 1.3;
+    }
+
+    .mockup-heading p {
+      margin: 4px 0 0;
+      color: var(--mockup-muted);
+      font-size: 12px;
+    }
+
+    .mockup-card {
+      margin-bottom: 14px;
+      padding: 16px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 12px;
+      background: var(--mockup-surface);
+    }
+
+    .mockup-card h3,
+    .mockup-card h4 {
+      margin: 0 0 12px;
+      color: #fff;
+      font-size: 16px;
+    }
+
+    .mockup-card p { color: var(--mockup-muted); }
+
+    .overview-strip {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      margin-bottom: 14px;
+    }
+
+    .overview-chip {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 999px;
+      background: var(--mockup-surface);
+      color: var(--mockup-muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .overview-chip strong { color: #fff; }
+    .status-dot { display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%; }
+    .status-dot.green { background: var(--mockup-success); }
+    .status-dot.blue { background: var(--mockup-primary); }
+    .status-dot.red { background: var(--mockup-danger); }
+    .status-dot.gray { background: #64748b; }
+
+    .wallet-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding: 13px 15px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 10px;
+      background: var(--mockup-surface);
+    }
+
+    .wallet-summary span { color: var(--mockup-muted); font-size: 12px; }
+    .wallet-summary strong { color: #fff; font-family: ui-monospace, monospace; font-size: 18px; }
+
+    .wallet-home-card { margin-bottom: 16px; padding: 18px; border: 1px solid rgba(14, 165, 233, 0.45); border-radius: 12px; background: #172b39; }
+    .wallet-home-top { display: flex; align-items: flex-end; justify-content: space-between; gap: 14px; }
+    .wallet-home-kicker { color: #9ddcf4; font-size: 12px; }
+    .wallet-home-label { margin-top: 8px; color: var(--mockup-muted); font-size: 12px; }
+    .wallet-home-value { margin-top: 2px; color: #fff; font-family: ui-monospace, monospace; font-size: 34px; font-weight: 700; }
+    .wallet-home-top .primary-btn { flex: 0 0 auto; }
+    .wallet-home-meta { display: flex; justify-content: space-between; gap: 10px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(157, 220, 244, 0.2); color: #b7c5d1; font-size: 11px; }
+    .wallet-home-meta strong { color: #8de0a2; font-weight: 600; }
+    .home-section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 0 0 8px; }
+    .home-section-heading h3 { margin: 0; color: #fff; font-size: 15px; }
+    .home-section-heading span { color: var(--mockup-muted); font-size: 11px; }
+    #screen-home .mockup-content > .wallet-summary { display: none; }
+
+    .charger-card {
+      padding: 16px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 12px;
+      background: var(--mockup-surface);
+    }
+
+    .charger-card-top,
+    .charger-card-meta,
+    .button-row,
+    .wallet-balance-row,
+    .payment-summary-row,
+    .transaction-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .charger-card-top strong { color: #fff; font-size: 15px; }
+    .charger-card-meta { margin-top: 10px; color: var(--mockup-muted); font-size: 12px; }
+    .charger-card-meta strong { color: #dce3eb; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge.available { background: rgba(34, 197, 94, 0.16); color: var(--mockup-success); }
+    .badge.offline { background: var(--mockup-surface-2); color: var(--mockup-muted); }
+    .badge.pending { background: rgba(245, 158, 11, 0.16); color: var(--mockup-warning); }
+    .badge.success { background: rgba(34, 197, 94, 0.16); color: var(--mockup-success); }
+    .badge.failed { background: rgba(239, 68, 68, 0.16); color: var(--mockup-danger); }
+
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn {
+      min-height: 42px;
+      padding: 9px 14px;
+      border-radius: 9px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .primary-btn { border: 1px solid var(--mockup-primary); background: var(--mockup-primary); color: #fff; }
+    .secondary-btn { border: 1px solid var(--mockup-border); background: var(--mockup-surface-2); color: var(--mockup-text); }
+    .danger-btn { border: 1px solid var(--mockup-danger); background: var(--mockup-danger); color: #fff; }
+    .primary-btn:disabled { cursor: default; opacity: 0.45; }
+
+    .bottom-nav {
+      position: relative;
+      flex: 0 0 auto;
+      display: flex;
+      justify-content: center;
+      border-top: 1px solid var(--mockup-border);
+      background: rgba(26, 33, 43, 0.98);
+    }
+
+    .bottom-nav-inner { display: flex; width: min(100%, 760px); }
+
+    .bottom-nav button {
+      flex: 1;
+      min-height: 62px;
+      border: 0;
+      border-top: 2px solid transparent;
+      background: transparent;
+      color: #a1adbd;
+      font-size: 11px;
+    }
+
+    .bottom-nav button.active { border-top-color: var(--mockup-danger); color: var(--mockup-primary); }
+    .bottom-nav .nav-icon { display: block; margin-bottom: 3px; font-size: 19px; }
+
+    .screen-switch {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 14px;
+      padding: 4px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 10px;
+      background: var(--mockup-surface-2);
+    }
+
+    .screen-switch button {
+      flex: 1;
+      min-height: 34px;
+      border: 0;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--mockup-muted);
+      font-size: 12px;
+    }
+
+    .screen-switch button.active { background: var(--mockup-primary); color: #fff; }
+
+    .wallet-balance {
+      padding: 16px;
+      border: 1px solid rgba(34, 197, 94, 0.35);
+      border-radius: 10px;
+      background: rgba(34, 197, 94, 0.1);
+    }
+
+    .wallet-balance .label { color: var(--mockup-muted); font-size: 12px; }
+    .wallet-balance .value { margin-top: 3px; color: #fff; font-family: ui-monospace, monospace; font-size: 28px; font-weight: 700; }
+
+    .wallet-mode { display: none; }
+    .wallet-mode.active { display: block; }
+
+    .alert {
+      margin: 14px 0;
+      padding: 12px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.55;
+    }
+
+    .alert.warning { background: rgba(245, 158, 11, 0.1); color: #f8c36c; }
+    .alert.danger { background: rgba(239, 68, 68, 0.1); color: #ff9090; }
+    .alert.success { background: rgba(34, 197, 94, 0.1); color: #84e39b; }
+
+    .field-label { display: block; margin-bottom: 7px; color: var(--mockup-muted); font-size: 12px; }
+    .field-input,
+    .field-select {
+      width: 100%;
+      min-height: 42px;
+      padding: 9px 11px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 8px;
+      outline: 0;
+      background: var(--mockup-surface-2);
+      color: #fff;
+    }
+
+    .amount-options { display: flex; gap: 8px; margin: 10px 0 14px; }
+    .amount-option { flex: 1; min-height: 38px; border: 1px solid var(--mockup-border); border-radius: 8px; background: var(--mockup-surface-2); color: #dce3eb; font-size: 12px; }
+    .amount-option.active { border-color: var(--mockup-primary); background: rgba(14, 165, 233, 0.12); color: #fff; }
+
+    .payment-summary {
+      margin-bottom: 14px;
+      padding: 14px;
+      border: 1px solid var(--mockup-border);
+      border-radius: 10px;
+      background: var(--mockup-surface-2);
+    }
+
+    .payment-summary-row { padding: 7px 0; color: var(--mockup-muted); font-size: 12px; }
+    .payment-summary-row + .payment-summary-row { border-top: 1px solid var(--mockup-border); }
+    .payment-summary-row strong { color: #fff; font-family: ui-monospace, monospace; }
+
+    .omise-shell { max-width: 500px; margin: 0 auto 14px; overflow: hidden; border: 1px solid #d7dde6; border-radius: 12px; background: #fff; color: #1e293b; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18); }
+    .omise-topbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px 18px; border-bottom: 1px solid #e5e7eb; background: #fff; }
+    .omise-logo { color: #d61f69; font-size: 20px; font-weight: 800; letter-spacing: 0; }
+    .omise-logo small { display: block; margin-top: 1px; color: #64748b; font-size: 9px; font-weight: 500; }
+    .omise-test-badge { padding: 4px 7px; border-radius: 999px; background: #fff3cd; color: #986c00; font-size: 10px; font-weight: 700; }
+    .omise-body { padding: 20px; }
+    .omise-merchant { color: #64748b; font-size: 12px; }
+    .omise-merchant strong { display: block; margin-top: 4px; color: #111827; font-size: 15px; }
+    .omise-amount { margin: 20px 0; text-align: center; }
+    .omise-amount span { color: #64748b; font-size: 12px; }
+    .omise-amount strong { display: block; margin-top: 3px; color: #111827; font-family: ui-monospace, monospace; font-size: 32px; }
+    .omise-method { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px; border: 1px solid #dbe2ea; border-radius: 8px; background: #f8fafc; font-size: 12px; }
+    .omise-method.selected { border-color: #d61f69; background: #fff5f8; }
+    .omise-method strong { color: #111827; }
+    .omise-method-check { color: #d61f69; font-weight: 800; }
+    .omise-primary { width: 100%; min-height: 42px; margin-top: 16px; border: 1px solid #d61f69; border-radius: 8px; background: #d61f69; color: #fff; font-size: 13px; font-weight: 700; }
+    .omise-primary:hover { filter: brightness(1.05); }
+    .omise-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 16px; padding-top: 12px; border-top: 1px solid #e5e7eb; color: #64748b; font-size: 10px; }
+    .omise-meta strong { display: block; margin-top: 3px; color: #334155; font-family: ui-monospace, monospace; font-size: 10px; }
+    .omise-qr-stage { display: grid; place-items: center; padding: 8px 0 14px; }
+    .omise-status { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 999px; background: #fff3cd; color: #986c00; font-size: 11px; font-weight: 700; }
+    .omise-status.success { background: #dcfce7; color: #15803d; }
+    .omise-status.failed { background: #fee2e2; color: #b91c1c; }
+    .omise-receipt { padding: 14px; border-radius: 8px; background: #f8fafc; }
+    .omise-receipt-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; color: #64748b; font-size: 12px; }
+    .omise-receipt-row + .omise-receipt-row { border-top: 1px solid #e5e7eb; }
+    .omise-receipt-row strong { color: #111827; font-family: ui-monospace, monospace; }
+    .omise-footer-note { margin: 14px 0 0; color: #64748b; text-align: center; font-size: 10px; line-height: 1.5; }
+    .omise-result-icon { display: grid; place-items: center; width: 54px; height: 54px; margin: 0 auto 12px; border-radius: 50%; background: #dcfce7; color: #15803d; font-size: 26px; font-weight: 800; }
+    .omise-result-icon.failed { background: #fee2e2; color: #b91c1c; }
+    .omise-result-title { margin: 0; color: #15803d; text-align: center; font-size: 20px; }
+    .omise-result-title.failed { color: #b91c1c; }
+
+    @media (max-width: 520px) {
+      .omise-body { padding: 16px; }
+      .omise-meta { grid-template-columns: 1fr; }
+    }
+
+    .stepper { display: flex; gap: 5px; margin-bottom: 16px; }
+    .stepper span { flex: 1; height: 4px; border-radius: 99px; background: var(--mockup-border); }
+    .stepper span.done { background: var(--mockup-success); }
+    .stepper span.current { background: var(--mockup-primary); }
+
+    .qr-wrap { display: grid; place-items: center; padding: 18px; }
+    .qr-grid { display: grid; grid-template-columns: repeat(13, 10px); grid-auto-rows: 10px; gap: 2px; padding: 10px; border-radius: 5px; background: #fff; }
+    .qr-cell { background: #fff; }
+    .qr-cell.on { background: #111820; }
+
+    .result-icon {
+      display: grid;
+      place-items: center;
+      width: 58px;
+      height: 58px;
+      margin: 10px auto 14px;
+      border-radius: 50%;
+      background: rgba(34, 197, 94, 0.16);
+      color: var(--mockup-success);
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .result-title { margin: 0; color: #fff; text-align: center; font-size: 20px; }
+    .result-copy { margin: 7px 0 18px; color: var(--mockup-muted); text-align: center; font-size: 12px; }
+
+    .transaction-row { padding: 12px 0; color: var(--mockup-muted); font-size: 12px; }
+    .transaction-row + .transaction-row { border-top: 1px solid var(--mockup-border); }
+    .transaction-row strong { color: #fff; }
+    .transaction-amount { color: var(--mockup-success); font-family: ui-monospace, monospace; font-weight: 700; }
+
+    .detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .detail-grid div { padding: 11px; border-radius: 8px; background: var(--mockup-surface-2); }
+    .detail-grid span { display: block; margin-bottom: 4px; color: var(--mockup-muted); font-size: 11px; }
+    .detail-grid strong { color: #fff; font-size: 13px; }
+
+    .login-screen { min-height: calc(100vh - 59px); background: var(--mockup-bg); overflow-x: hidden; }
+    .login-topbar { padding: 18px 22px; border-bottom: 2px solid #e60024; background: #0f141b; color: #fff; font-weight: 700; }
+    .login-main { display: flex; align-items: center; justify-content: center; width: 100%; min-height: calc(100vh - 180px); padding: 24px 16px; }
+    .login-card { width: 100%; max-width: 380px; min-width: 0; padding: 22px; border: 1px solid var(--mockup-border); border-radius: 12px; background: var(--mockup-surface); }
+    .login-card h1 { margin: 0 0 20px; color: #fff; font-size: 20px; }
+    .login-field { display: block; margin-bottom: 14px; color: var(--mockup-muted); font-size: 12px; }
+    .login-field input { display: block; width: 100%; margin-top: 7px; min-height: 44px; padding: 9px 11px; border: 1px solid var(--mockup-border); border-radius: 8px; background: var(--mockup-surface-2); color: #fff; }
+    .login-submit { width: 100%; margin-top: 4px; }
+    .login-footer { padding: 16px; color: var(--mockup-muted); text-align: center; font-size: 11px; }
+
+    .prototype-note { margin: 2px 0 16px; color: #c1cad5; font-size: 11px; }
+    .prototype-note strong { color: var(--mockup-warning); }
+
+    .estimate-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .estimate-title-row h3 { margin-bottom: 4px; }
+    .estimate-title-row p { margin: 0 0 12px; font-size: 12px; }
+    .estimate-switch { margin-bottom: 14px; }
+    .estimate-mode { display: none; }
+    .estimate-mode.active { display: block; }
+    .estimate-input-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+    .estimate-highlight { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+    .estimate-stat { padding: 11px; border-radius: 8px; background: var(--mockup-surface-2); }
+    .estimate-stat span { display: block; color: var(--mockup-muted); font-size: 11px; }
+    .estimate-stat strong { display: block; margin-top: 4px; color: #fff; font-family: ui-monospace, monospace; font-size: 15px; }
+    .estimate-caption { margin: 12px 0 0; color: var(--mockup-muted); font-size: 11px; line-height: 1.5; }
+
+    @media (max-width: 520px) {
+      .wallet-home-top,
+      .wallet-home-meta { align-items: stretch; flex-direction: column; }
+      .estimate-input-grid,
+      .estimate-highlight { grid-template-columns: 1fr; }
+      #screen-charger .button-row { flex-direction: column; align-items: stretch; }
+    }
+
+    @media (min-width: 900px) {
+      .review-toolbar { padding-right: calc((100vw - 1100px) / 2); padding-left: calc((100vw - 1100px) / 2); }
+      .mockup-content { padding-right: 20px; padding-left: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="review-toolbar">
+    <div class="review-toolbar-title">EV Charger Mockup<span>ภาพระบบจริง + ส่วนที่จะเพิ่ม</span></div>
+    <nav class="review-steps" aria-label="เลือกหน้าจอ">
+      <button class="review-step active" data-go="login">01 Login</button>
+      <button class="review-step" data-go="home">02 Home</button>
+      <button class="review-step" data-go="wallet">03 Wallet</button>
+      <button class="review-step proposed" data-go="payment">04 Omise</button>
+      <button class="review-step proposed" data-go="pending">05 Omise status</button>
+      <button class="review-step proposed" data-go="success">06 Wallet credit</button>
+      <button class="review-step" data-go="charger">07 ชาร์จ</button>
+    </nav>
+  </header>
+
+  <main class="mockup-viewport">
+    <section class="mockup-screen active" id="screen-login">
+      <div class="login-screen">
+        <div class="login-topbar">⚡ OCPP Central</div>
+        <div class="login-main">
+          <div class="login-card">
+            <h1>เข้าสู่ระบบ</h1>
+            <label class="login-field">Username<input id="login-username" type="text" value="korakots" /></label>
+            <label class="login-field">Password<input id="login-password" type="password" value="Demo123!" /></label>
+            <button class="primary-btn login-submit" id="login-submit">เข้าสู่ระบบ</button>
+          </div>
+        </div>
+        <div class="login-footer">Powered by EV Ilustro v1.0</div>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-home">
+      <div class="mockup-app">
+        <header class="mockup-header">
+          <div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div>
+          <div class="mockup-header-actions"><span class="mockup-online">0/1 online</span><button class="mockup-header-icon">↻</button></div>
+        </header>
+        <div class="mockup-content">
+          <section class="wallet-home-card">
+            <div class="wallet-home-top"><div><div class="wallet-home-kicker">Wallet ของฉัน</div><div class="wallet-home-label">ยอดเงินคงเหลือ</div><div class="wallet-home-value">฿141.20</div></div><button class="primary-btn" data-go="wallet" data-open-wallet-mode="target">＋ เติมเงิน</button></div>
+            <div class="wallet-home-meta"><span>พร้อมใช้สำหรับการชาร์จ</span><strong>สถานะ Wallet: พร้อมใช้</strong></div>
+          </section>
+          <div class="home-section-heading"><h3>สถานะเครื่องชาร์จ</h3><span>ข้อมูลล่าสุดจากระบบ</span></div>
+          <div class="overview-strip">
+            <div class="overview-chip"><span class="status-dot green"></span><strong>0</strong> พร้อมใช้</div>
+            <div class="overview-chip"><span class="status-dot blue"></span><strong>0</strong> กำลังชาร์จ</div>
+            <div class="overview-chip"><span class="status-dot red"></span><strong>0</strong> ขัดข้อง</div>
+            <div class="overview-chip"><span class="status-dot gray"></span><strong>1</strong> ออฟไลน์</div>
+          </div>
+          <button class="wallet-summary" data-go="wallet">
+            <span>💰 ยอดเงินคงเหลือ (แตะเพื่อเติมเงิน/ตั้งงบ)</span><strong>฿141.20</strong>
+          </button>
+          <article class="charger-card" data-go="charger">
+            <div class="charger-card-top"><strong><span class="status-dot gray"></span>yc0117126030096</strong><span><span class="badge offline">Offline</span> <span class="badge available">Available</span></span></div>
+            <div class="charger-card-meta"><span>ยี่ห้อ/รุ่น <strong>XQ / EV-07KW</strong></span><span>Heartbeat <strong>15/8/2569 16:02:02</strong></span></div>
+          </article>
+        </div>
+        <nav class="bottom-nav"><div class="bottom-nav-inner"><button class="active" data-go="home"><span class="nav-icon">🏠</span>หน้าแรก</button><button data-go="history"><span class="nav-icon">📜</span>ประวัติ</button><button data-go="wallet"><span class="nav-icon">⚙️</span>ตั้งค่า</button></div></nav>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-wallet">
+      <div class="mockup-app">
+        <header class="mockup-header"><div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div><div class="mockup-header-actions"><span class="mockup-online">0/1 online</span><button class="mockup-header-icon">↻</button></div></header>
+        <div class="mockup-content">
+          <div class="mockup-heading"><button class="mockup-back" data-go="home">←</button><div><h2>ตั้งค่า</h2><p>กระเป๋าเงินของฉัน</p></div></div>
+          <div class="screen-switch"><button class="wallet-tab active" data-wallet-mode="current">ระบบปัจจุบัน</button><button class="wallet-tab" data-wallet-mode="target">แบบที่จะเพิ่ม</button></div>
+
+          <div class="wallet-mode active" data-wallet-panel="current">
+            <article class="mockup-card">
+              <h3>กระเป๋าเงินของฉัน</h3>
+              <div class="wallet-balance"><div class="label">💰 ยอดเงินคงเหลือ</div><div class="value">฿141.20</div></div>
+              <div class="alert warning">เติมเงินเข้ากระเป๋า (⚠️ โหมดทดสอบ ยังไม่เชื่อมระบบชำระเงินจริง เงินไม่ได้เคลื่อนไหวจริง)</div>
+              <div class="button-row"><input class="field-input" value="500" aria-label="จำนวนเงิน" /><button class="danger-btn">เติมเงิน (ทดสอบ)</button></div>
+              <div class="alert" style="margin-bottom:0">ตั้งงบสำหรับการชาร์จครั้งถัดไป: ยังไม่ได้ตั้งงบ</div>
+            </article>
+            <p class="prototype-note"><strong>จุดที่ต้องเปลี่ยน:</strong> ปุ่มเติมเงินทดสอบจะถูกแทนด้วย Payment flow ที่ตรวจสอบกับ Omise ก่อนเครดิต Wallet</p>
+          </div>
+
+          <div class="wallet-mode" data-wallet-panel="target">
+            <article class="mockup-card">
+              <h3>กระเป๋าเงินของฉัน</h3>
+              <div class="wallet-balance"><div class="label">💰 ยอดเงินคงเหลือ</div><div class="value">฿141.20</div></div>
+              <div style="margin-top:16px"><label class="field-label">จำนวนเงินที่ต้องการเติม</label><input class="field-input" id="topup-amount" value="500" inputmode="decimal" /></div>
+              <div class="amount-options"><button class="amount-option" data-amount="100">฿100</button><button class="amount-option active" data-amount="500">฿500</button><button class="amount-option" data-amount="1000">฿1,000</button></div>
+              <label class="field-label">ช่องทางชำระเงิน</label><select class="field-select"><option>PromptPay</option><option>บัตรเครดิต / เดบิต</option></select>
+              <button class="primary-btn" style="width:100%; margin-top:16px" data-go="payment">สร้างรายการชำระเงิน</button>
+            </article>
+            <p class="prototype-note"><strong>ส่วนที่จะเพิ่ม:</strong> เลือกยอด, เลือกช่องทาง, สร้างรายการ และรอผลยืนยันก่อนเติม Wallet</p>
+          </div>
+        </div>
+        <nav class="bottom-nav"><div class="bottom-nav-inner"><button data-go="home"><span class="nav-icon">🏠</span>หน้าแรก</button><button data-go="history"><span class="nav-icon">📜</span>ประวัติ</button><button class="active" data-go="wallet"><span class="nav-icon">⚙️</span>ตั้งค่า</button></div></nav>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-payment">
+      <div class="mockup-app">
+        <header class="mockup-header"><div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div><span class="mockup-online">External: Omise</span></header>
+        <div class="mockup-content">
+          <div class="mockup-heading"><button class="mockup-back" data-go="wallet">←</button><div><h2>ยืนยันการเติมเงิน</h2><p>กำลังเปิดหน้าชำระเงินของ Omise</p></div></div>
+          <div class="stepper"><span class="done"></span><span class="current"></span><span></span></div>
+          <div class="alert warning">หน้านี้คือหน้าชำระเงินภายนอกของ Omise (จำลอง) ระบบเราจะยังไม่เพิ่มยอด Wallet ในขั้นตอนนี้</div>
+          <div class="omise-shell">
+            <div class="omise-topbar"><div class="omise-logo">omise<small>Opn Payments</small></div><span class="omise-test-badge">TEST MODE</span></div>
+            <div class="omise-body">
+              <div class="omise-merchant">ชำระเงินให้<strong>EV Charger Central</strong></div>
+              <div class="omise-amount"><span>ยอดที่ต้องชำระ</span><strong>฿500.00 <small>THB</small></strong></div>
+              <div class="omise-method selected"><span><strong>PromptPay</strong><br />สแกน QR ผ่าน Mobile Banking</span><span class="omise-method-check">✓ เลือกแล้ว</span></div>
+              <button class="omise-primary" data-go="pending">ดำเนินการชำระเงิน</button>
+              <div class="omise-meta"><div>Merchant reference<strong>TOPUP-0001</strong></div><div>Currency<strong>THB</strong></div></div>
+              <p class="omise-footer-note">การชำระเงินดำเนินการโดย Omise / Opn Payments</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-pending">
+      <div class="mockup-app">
+        <header class="mockup-header"><div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div><span class="mockup-online">External: Omise</span></header>
+        <div class="mockup-content">
+          <div class="mockup-heading"><button class="mockup-back" data-go="payment">←</button><div><h2>Omise PromptPay</h2><p>หน้าชำระเงินภายนอก • TOPUP-0001</p></div></div>
+          <div class="stepper"><span class="done"></span><span class="done"></span><span class="current"></span></div>
+          <div class="omise-shell">
+            <div class="omise-topbar"><div class="omise-logo">omise<small>Opn Payments</small></div><span class="omise-test-badge">TEST MODE</span></div>
+            <div class="omise-body">
+              <div class="omise-merchant">ชำระเงินให้<strong>EV Charger Central</strong></div>
+              <div class="omise-amount"><span>สแกน QR เพื่อชำระ</span><strong>฿500.00 <small>THB</small></strong></div>
+              <div class="omise-qr-stage"><div class="qr-wrap"><div class="qr-grid" id="qr-grid" aria-label="Omise PromptPay QR จำลอง"></div></div><span class="omise-status">● charge: pending</span></div>
+              <div class="omise-receipt"><div class="omise-receipt-row"><span>Charge ID</span><strong>chrg_test_7f3a91</strong></div><div class="omise-receipt-row"><span>Source</span><strong>src_test_9c21b0</strong></div><div class="omise-receipt-row"><span>หมดอายุ</span><strong>10 นาที</strong></div></div>
+              <p class="omise-footer-note">กำลังรอ Omise ส่ง webhook ยืนยันรายการกลับมายังระบบ</p>
+            </div>
+          </div>
+          <div class="button-row"><button class="secondary-btn" data-go="expired">จำลองหมดอายุ</button><button class="primary-btn" data-go="success">จำลองชำระสำเร็จ</button></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-success">
+      <div class="mockup-app">
+        <header class="mockup-header"><div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div><span class="badge success">Omise: successful</span></header>
+        <div class="mockup-content">
+          <div class="mockup-heading"><button class="mockup-back" data-go="wallet">←</button><div><h2>ผลจาก Omise</h2><p>ระบบได้รับผลชำระเงินและกำลังเครดิต Wallet</p></div></div>
+          <div class="omise-shell">
+            <div class="omise-topbar"><div class="omise-logo">omise<small>Opn Payments</small></div><span class="omise-status success">● successful</span></div>
+            <div class="omise-body">
+              <div class="omise-result-icon">✓</div>
+              <h2 class="omise-result-title">Payment successful</h2>
+              <div class="omise-amount"><span>ยอดที่ชำระสำเร็จ</span><strong>฿500.00 <small>THB</small></strong></div>
+              <div class="omise-receipt"><div class="omise-receipt-row"><span>Charge ID</span><strong>chrg_test_7f3a91</strong></div><div class="omise-receipt-row"><span>Status</span><strong>successful</strong></div><div class="omise-receipt-row"><span>Webhook</span><strong>charge.complete</strong></div></div>
+              <p class="omise-footer-note">ผลลัพธ์จาก Omise ที่ระบบเราใช้เป็นเงื่อนไขเครดิต Wallet</p>
+            </div>
+          </div>
+          <article class="mockup-card">
+            <h3>ระบบ EV Charger</h3>
+            <p class="prototype-note">Omise ยืนยันแล้ว ระบบจึงเพิ่มยอดเข้า Wallet ได้</p>
+            <div class="wallet-balance"><div class="label">ยอดเงินคงเหลือใหม่</div><div class="value">฿641.20</div></div>
+            <div style="margin-top:16px"><div class="transaction-row"><span>รายการเติมเงิน</span><span class="transaction-amount">+ ฿500.00</span></div><div class="transaction-row"><span>สถานะ</span><strong><span class="badge success">เครดิตเข้า Wallet แล้ว</span></strong></div></div>
+            <button class="primary-btn" style="width:100%; margin-top:16px" data-go="charger">ไปเลือกเครื่องชาร์จ</button>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-expired">
+      <div class="mockup-app">
+        <header class="mockup-header"><div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div><span class="badge failed">Omise: expired</span></header>
+        <div class="mockup-content">
+          <div class="mockup-heading"><button class="mockup-back" data-go="wallet">←</button><div><h2>ผลจาก Omise</h2><p>รายการยังไม่ถูกเครดิตเข้า Wallet</p></div></div>
+          <div class="omise-shell">
+            <div class="omise-topbar"><div class="omise-logo">omise<small>Opn Payments</small></div><span class="omise-status failed">● expired</span></div>
+            <div class="omise-body">
+              <div class="omise-result-icon failed">!</div>
+              <h2 class="omise-result-title failed">Payment expired</h2>
+              <div class="omise-amount"><span>รายการที่หมดอายุ</span><strong>฿500.00 <small>THB</small></strong></div>
+              <div class="omise-receipt"><div class="omise-receipt-row"><span>Charge ID</span><strong>chrg_test_7f3a91</strong></div><div class="omise-receipt-row"><span>Status</span><strong>expired</strong></div><div class="omise-receipt-row"><span>Wallet credit</span><strong>ไม่เพิ่มยอด</strong></div></div>
+              <p class="omise-footer-note">ระบบจะไม่เครดิต Wallet เพราะยังไม่มีผลสำเร็จจาก Omise</p>
+            </div>
+          </div>
+          <article class="mockup-card">
+            <div class="alert danger" style="margin-top:0"><strong>เติมเงินไม่สำเร็จ</strong><br />สร้างรายการใหม่เพื่อชำระเงินอีกครั้ง</div>
+            <div class="button-row"><button class="secondary-btn" data-go="wallet">กลับไป Wallet</button><button class="primary-btn" data-go="payment">สร้างรายการใหม่</button></div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-charger">
+      <div class="mockup-app">
+        <header class="mockup-header"><div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div><span class="mockup-online">0/1 online</span></header>
+        <div class="mockup-content">
+          <div class="mockup-heading"><button class="mockup-back" data-go="home">←</button><div><h2>เครื่องชาร์จ: yc0117126030096</h2><p><span class="badge offline">Offline</span> <span class="badge available">Available</span></p></div></div>
+          <article class="mockup-card">
+            <div class="detail-grid"><div><span>ยี่ห้อ / รุ่น</span><strong>XQ / EV-07KW</strong></div><div><span>Firmware</span><strong>MCU_260531</strong></div><div><span>Connector</span><strong>1 (NoError)</strong></div><div><span>Heartbeat ล่าสุด</span><strong>15/8/2569 16:02:02</strong></div></div>
+          </article>
+          <article class="mockup-card estimate-card">
+            <div class="estimate-title-row"><div><h3>ประมาณการชาร์จ</h3><p>คำนวณค่าใช้จ่ายและเวลาจากข้อมูลรถกับหัวชาร์จ</p></div><span class="badge pending">เมื่อเครื่อง Online</span></div>
+            <div class="screen-switch estimate-switch"><button class="estimate-tab active" data-estimate-mode="soc">มีข้อมูล SoC</button><button class="estimate-tab" data-estimate-mode="fallback">ไม่มีข้อมูล SoC</button></div>
+
+            <div class="estimate-mode active" data-estimate-panel="soc">
+              <div class="estimate-input-grid">
+                <label class="field-label">SoC ปัจจุบัน (%)<input class="field-input" id="estimate-current-soc" type="number" min="0" max="100" value="35" /></label>
+                <label class="field-label">เป้าหมาย SoC<select class="field-select" id="estimate-target-soc"><option value="80">80%</option><option value="100">100%</option></select></label>
+                <label class="field-label">ความจุแบตเตอรี่ (kWh)<input class="field-input" id="estimate-battery" type="number" min="1" value="60" /></label>
+                <label class="field-label">กำลังชาร์จ (kW)<input class="field-input" id="estimate-power" type="number" min="0.1" step="0.1" value="7" /></label>
+              </div>
+              <div class="estimate-highlight"><div class="estimate-stat"><span>ต้องเติมประมาณ</span><strong id="estimate-energy">30.00 kWh</strong></div><div class="estimate-stat"><span>ใช้เวลาประมาณ</span><strong id="estimate-time">4 ชม. 17 นาที</strong></div><div class="estimate-stat"><span>ค่าใช้จ่ายประมาณ</span><strong id="estimate-cost">฿210.00</strong></div></div>
+              <div class="alert warning">เป็นค่าประมาณจาก SoC และกำลังชาร์จจริง ช่วงแบตใกล้เต็มอาจลดกำลังลง ทำให้ใช้เวลานานกว่าค่านี้</div>
+            </div>
+
+            <div class="estimate-mode" data-estimate-panel="fallback">
+              <div class="alert warning" style="margin-top:0">เครื่องยังไม่ได้ส่งค่า SoC จึงยืนยันระดับแบตเตอรี่หรือคำว่า “เต็ม” ไม่ได้</div>
+              <div class="estimate-highlight"><div class="estimate-stat"><span>กำลังชาร์จอ้างอิง</span><strong id="estimate-fallback-power">7.00 kW</strong></div><div class="estimate-stat"><span>พลังงานตามงบ</span><strong id="estimate-fallback-energy">14.29 kWh</strong></div><div class="estimate-stat"><span>เวลาประมาณ</span><strong id="estimate-fallback-time">2 ชม. 2 นาที</strong></div></div>
+              <label class="field-label" style="margin-top:14px">งบสูงสุดสำหรับรอบนี้ (บาท)<input class="field-input" id="estimate-budget" type="number" min="1" step="1" value="100" /></label>
+              <p class="estimate-caption">ระบบจะติดตาม MeterValues และสั่งหยุดอัตโนมัติเมื่อถึงงบที่ตั้งไว้ ค่าใช้จ่ายจริงอาจต่างเล็กน้อยตามรอบการส่งข้อมูลของเครื่อง</p>
+            </div>
+          </article>
+          <article class="mockup-card">
+            <h3>เริ่มชาร์จ</h3>
+            <div class="wallet-summary"><span>ยอด Wallet ที่ใช้ได้</span><strong>฿641.20</strong></div>
+            <label class="field-label">งบสำหรับ session นี้ (เว้นว่าง = ใช้ Wallet ทั้งหมด)</label>
+            <input class="field-input" value="100" />
+            <button class="primary-btn" style="width:100%; margin-top:14px" disabled>เริ่มชาร์จเมื่อเครื่อง Online</button>
+          </article>
+          <div class="alert warning">OCPP charging flow เดิมยังใช้ต่อ: Authorize → StartTransaction → MeterValues → StopTransaction</div>
+        </div>
+        <nav class="bottom-nav"><div class="bottom-nav-inner"><button class="active" data-go="home"><span class="nav-icon">🏠</span>หน้าแรก</button><button data-go="history"><span class="nav-icon">📜</span>ประวัติ</button><button data-go="wallet"><span class="nav-icon">⚙️</span>ตั้งค่า</button></div></nav>
+      </div>
+    </section>
+
+    <section class="mockup-screen" id="screen-history">
+      <div class="mockup-app">
+        <header class="mockup-header"><div class="mockup-brand">⚡ OCPP Central <span class="mockup-version">v1.2</span></div><span class="mockup-online">0/1 online</span></header>
+        <div class="mockup-content">
+          <div class="mockup-heading"><button class="mockup-back" data-go="home">←</button><div><h2>ประวัติการชาร์จ</h2><p>ข้อมูลจากระบบปัจจุบัน</p></div></div>
+          <article class="mockup-card"><div class="alert" style="margin-top:0">ยังไม่มี transaction ในช่วงที่เลือก</div><button class="secondary-btn" data-go="home">กลับหน้าแรก</button></article>
+        </div>
+        <nav class="bottom-nav"><div class="bottom-nav-inner"><button data-go="home"><span class="nav-icon">🏠</span>หน้าแรก</button><button class="active" data-go="history"><span class="nav-icon">📜</span>ประวัติ</button><button data-go="wallet"><span class="nav-icon">⚙️</span>ตั้งค่า</button></div></nav>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const screens = ["login", "home", "wallet", "payment", "pending", "success", "expired", "charger", "history"];
+
+    function showScreen(name) {
+      if (!screens.includes(name)) return;
+      document.querySelectorAll(".mockup-screen").forEach((el) => el.classList.toggle("active", el.id === `screen-${name}`));
+      document.querySelectorAll("[data-go]").forEach((el) => el.classList.toggle("active", el.dataset.go === name && el.classList.contains("review-step")));
+      window.scrollTo(0, 0);
+    }
+
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-go]");
+      if (target) {
+        event.preventDefault();
+        showScreen(target.dataset.go);
+        if (target.dataset.openWalletMode) {
+          const walletTab = document.querySelector(`[data-wallet-mode="${target.dataset.openWalletMode}"]`);
+          if (walletTab) walletTab.click();
+        }
+      }
+    });
+
+    document.getElementById("login-submit").addEventListener("click", () => showScreen("home"));
+
+    document.querySelectorAll("[data-wallet-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const mode = button.dataset.walletMode;
+        document.querySelectorAll("[data-wallet-mode]").forEach((el) => el.classList.toggle("active", el === button));
+        document.querySelectorAll("[data-wallet-panel]").forEach((el) => el.classList.toggle("active", el.dataset.walletPanel === mode));
+      });
+    });
+
+    document.querySelectorAll("[data-amount]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-amount]").forEach((el) => el.classList.toggle("active", el === button));
+        document.getElementById("topup-amount").value = button.dataset.amount;
+      });
+    });
+
+    document.querySelectorAll("[data-estimate-mode]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const mode = button.dataset.estimateMode;
+        document.querySelectorAll("[data-estimate-mode]").forEach((el) => el.classList.toggle("active", el === button));
+        document.querySelectorAll("[data-estimate-panel]").forEach((el) => el.classList.toggle("active", el.dataset.estimatePanel === mode));
+        updateEstimate();
+      });
+    });
+
+    const estimatePricePerKwh = 7;
+    const estimateEfficiency = 0.9;
+
+    function formatEstimateMoney(value) {
+      return `฿${Math.max(0, value).toFixed(2)}`;
+    }
+
+    function formatEstimateTime(hours) {
+      const totalMinutes = Math.max(0, Math.round(hours * 60));
+      return `${Math.floor(totalMinutes / 60)} ชม. ${totalMinutes % 60} นาที`;
+    }
+
+    function numberFrom(id, fallback) {
+      const value = parseFloat(document.getElementById(id).value);
+      return Number.isFinite(value) ? value : fallback;
+    }
+
+    function updateEstimate() {
+      const currentSoc = Math.min(100, Math.max(0, numberFrom("estimate-current-soc", 0)));
+      const targetSoc = Math.min(100, Math.max(0, numberFrom("estimate-target-soc", 80)));
+      const batteryKwh = Math.max(0, numberFrom("estimate-battery", 60));
+      const powerKw = Math.max(0.1, numberFrom("estimate-power", 7));
+      const energyKwh = (batteryKwh * Math.max(0, targetSoc - currentSoc) / 100) / estimateEfficiency;
+
+      document.getElementById("estimate-energy").textContent = `${energyKwh.toFixed(2)} kWh`;
+      document.getElementById("estimate-time").textContent = formatEstimateTime(energyKwh / powerKw);
+      document.getElementById("estimate-cost").textContent = formatEstimateMoney(energyKwh * estimatePricePerKwh);
+
+      const budget = Math.max(0, numberFrom("estimate-budget", 100));
+      const fallbackEnergy = budget / estimatePricePerKwh;
+      document.getElementById("estimate-fallback-power").textContent = `${powerKw.toFixed(2)} kW`;
+      document.getElementById("estimate-fallback-energy").textContent = `${fallbackEnergy.toFixed(2)} kWh`;
+      document.getElementById("estimate-fallback-time").textContent = formatEstimateTime(fallbackEnergy / powerKw);
+    }
+
+    ["estimate-current-soc", "estimate-target-soc", "estimate-battery", "estimate-power", "estimate-budget"].forEach((id) => {
+      document.getElementById(id).addEventListener("input", updateEstimate);
+      document.getElementById(id).addEventListener("change", updateEstimate);
+    });
+    updateEstimate();
+
+    const qrGrid = document.getElementById("qr-grid");
+    const qrPattern = [
+      "1111111001011", "1000001011001", "1011101010111", "1011101001101", "1011101010101", "1000001001111", "1111111010101",
+      "0000000011010", "1101111110011", "1010010011110", "1111011110101", "0010110011011", "1101111010111"
+    ];
+    qrPattern.join("").split("").forEach((cell) => {
+      const span = document.createElement("span");
+      span.className = `qr-cell ${cell === "1" ? "on" : ""}`;
+      qrGrid.appendChild(span);
+    });
+  </script>
+</body>
+</html>

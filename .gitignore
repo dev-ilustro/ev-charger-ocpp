@@ -1,0 +1,10 @@
+venv/
+.venv/
+__pycache__/
+*.pyc
+data/
+data_manual/
+*.db
+presentation_capture/
+presentation_output*/
+.env

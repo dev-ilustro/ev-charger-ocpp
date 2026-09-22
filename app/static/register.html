@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>สมัครสมาชิก - OCPP 1.6J Central System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css?v=5" />
+</head>
+<body>
+  <div class="auth-shell">
+    <div class="auth-topbar">⚡ OCPP Central</div>
+
+    <div class="auth-main">
+      <div class="auth-card">
+        <h2>สมัครสมาชิก</h2>
+        <form id="register-form" class="form-grid">
+          <label>Username
+            <input type="text" id="reg-username" required autocomplete="username" />
+          </label>
+          <label>Password
+            <input type="password" id="reg-password" required autocomplete="new-password" minlength="6" />
+          </label>
+          <label>ชื่อ-นามสกุล
+            <input type="text" id="reg-fullname" />
+          </label>
+          <label>อีเมล
+            <input type="text" id="reg-email" />
+          </label>
+          <label>เบอร์โทร
+            <input type="text" id="reg-phone" />
+          </label>
+          <p id="reg-error" class="form-error" style="display:none"></p>
+          <button type="submit">สมัครสมาชิก</button>
+        </form>
+        <p class="auth-footer-link">
+          มีบัญชีอยู่แล้ว? <a href="login.html">เข้าสู่ระบบ</a>
+        </p>
+      </div>
+    </div>
+
+    <footer class="page-footer">
+      Powered by EV Ilustro v1.0
+    </footer>
+  </div>
+
+  <script src="register.js"></script>
+</body>
+</html>
