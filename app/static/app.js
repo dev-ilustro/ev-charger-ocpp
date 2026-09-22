@@ -99,7 +99,7 @@ async function initAuth() {
 
   if (me.role === "customer") {
     document.getElementById("wallet-card").style.display = "block";
-    document.getElementById("wallet-home-summary").style.display = "block";
+    document.getElementById("wallet-home-summary").style.display = "grid";
     renderWalletCard(me.wallet_balance, me.next_session_budget);
   }
 }

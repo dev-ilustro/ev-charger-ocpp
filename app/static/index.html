@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=12" />
 </head>
 <body>
   <div class="mobile-header">
@@ -24,17 +24,18 @@
   <main class="app-content">
     <!-- ========== หน้าแรก ========== -->
     <section class="screen active" id="screen-home" data-screen="home">
-      <div class="overview-strip" id="overview-strip"></div>
-
       <div class="card wallet-home-summary" id="wallet-home-summary" style="display:none">
         <div class="wallet-home-summary-main" onclick="switchScreen('settings')">
-          <span style="color:var(--text-secondary); font-size:13px">💰 ยอดเงินคงเหลือ</span>
-          <strong id="wallet-home-chip-value" style="font-family:var(--font-mono); font-size:18px">-</strong>
+          <div class="wallet-home-kicker">Wallet ของฉัน</div>
+          <div class="wallet-home-label">ยอดเงินคงเหลือ</div>
+          <strong id="wallet-home-chip-value" class="wallet-home-value">-</strong>
         </div>
-        <button type="button" class="secondary wallet-home-action" onclick="event.stopPropagation(); openMockPaymentDialog()">เติมเงิน</button>
+        <button type="button" class="wallet-home-action" onclick="event.stopPropagation(); openMockPaymentDialog()">＋ เติมเงิน</button>
+        <div class="wallet-home-meta"><span>พร้อมใช้สำหรับการชาร์จ</span><strong>สถานะ Wallet: พร้อมใช้</strong></div>
       </div>
-        </div>
-      </div>
+
+      <div class="home-section-heading"><h3>สถานะเครื่องชาร์จ</h3><span>ข้อมูลล่าสุดจากระบบ</span></div>
+      <div class="overview-strip" id="overview-strip"></div>
 
       <div id="cp-list">
         <div class="skeleton skeleton-card"></div>
