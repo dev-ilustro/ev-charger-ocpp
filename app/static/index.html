@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css?v=11" />
+  <link rel="stylesheet" href="style.css?v=12" />
 </head>
 <body>
   <div class="mobile-header">
@@ -24,17 +24,20 @@
   <main class="app-content">
     <!-- ========== หน้าแรก ========== -->
     <section class="screen active" id="screen-home" data-screen="home">
-      <div class="overview-strip" id="overview-strip"></div>
-
       <div class="card wallet-home-summary" id="wallet-home-summary" style="display:none">
         <div class="wallet-home-summary-main" onclick="switchScreen('settings')">
-          <span style="color:var(--text-secondary); font-size:13px">💰 ยอดเงินคงเหลือ</span>
-          <strong id="wallet-home-chip-value" style="font-family:var(--font-mono); font-size:18px">-</strong>
+          <div>
+            <div class="wallet-home-kicker">Wallet ของฉัน</div>
+            <div class="wallet-home-label">ยอดเงินคงเหลือ</div>
+            <strong id="wallet-home-chip-value" class="wallet-home-value">-</strong>
+          </div>
         </div>
-        <button type="button" class="secondary wallet-home-action" onclick="event.stopPropagation(); openMockPaymentDialog()">เติมเงิน</button>
+        <button type="button" class="wallet-home-action" onclick="event.stopPropagation(); openMockPaymentDialog()">＋ เติมเงิน</button>
+        <div class="wallet-home-meta"><span>พร้อมใช้สำหรับการชาร์จ</span><strong>สถานะ Wallet: พร้อมใช้</strong></div>
       </div>
-        </div>
-      </div>
+
+      <div class="home-section-heading"><h3>สถานะเครื่องชาร์จ</h3><span>ข้อมูลล่าสุดจากระบบ</span></div>
+      <div class="overview-strip" id="overview-strip"></div>
 
       <div id="cp-list">
         <div class="skeleton skeleton-card"></div>
@@ -288,23 +291,36 @@
     </section>
 
     <section id="mock-payment-step-scan" class="mock-payment-step" style="display:none">
-      <div class="mock-payment-status pending">● รอการสแกน</div>
-      <div class="mock-payment-amount-display" id="mock-payment-pending-amount">฿0.00</div>
-      <p class="mock-payment-note">รายการ <strong id="mock-payment-reference">-</strong></p>
-      <div class="mock-qr" id="mock-payment-qr" role="img" aria-label="QR จำลองสำหรับการทดสอบ"></div>
-      <p class="mock-payment-qr-caption">QR จำลองสำหรับนำเสนอเท่านั้น</p>
-      <button type="button" class="mock-payment-primary" id="mock-payment-scan-button" onclick="completeMockPayment()">จำลองสแกนสำเร็จ</button>
-      <button type="button" class="secondary mock-payment-cancel" onclick="closeMockPaymentDialog()">ยกเลิก</button>
+      <div class="omise-shell">
+        <div class="omise-topbar"><div class="omise-logo">omise<small>Opn Payments</small></div><span class="omise-test-badge">TEST MODE</span></div>
+        <div class="omise-body">
+          <div class="omise-merchant">ชำระเงินให้<strong>EV Charger Central</strong></div>
+          <div class="omise-amount"><span>สแกน QR เพื่อชำระ</span><strong><span id="mock-payment-pending-amount">฿0.00</span> <small>THB</small></strong></div>
+          <div class="omise-qr-stage"><div class="qr-wrap"><div class="qr-grid" id="mock-payment-qr" role="img" aria-label="QR จำลองสำหรับการทดสอบ"></div></div><span class="omise-status">● charge: pending</span></div>
+          <div class="omise-receipt">
+            <div class="omise-receipt-row"><span>Merchant reference</span><strong id="mock-payment-reference">-</strong></div>
+            <div class="omise-receipt-row"><span>Source</span><strong>src_mock_promptpay</strong></div>
+            <div class="omise-receipt-row"><span>หมดอายุ</span><strong>10 นาที</strong></div>
+          </div>
+          <p class="omise-footer-note">กำลังรอผลการสแกนจากระบบจำลอง</p>
+        </div>
+      </div>
+      <div class="button-row mock-payment-actions"><button type="button" class="secondary" onclick="closeMockPaymentDialog()">ยกเลิก</button><button type="button" id="mock-payment-scan-button" onclick="completeMockPayment()">จำลองสแกนสำเร็จ</button></div>
       <p id="mock-payment-scan-error" class="form-msg" style="display:none"></p>
     </section>
 
     <section id="mock-payment-step-success" class="mock-payment-step" style="display:none">
-      <div class="mock-payment-success-icon">✓</div>
-      <div class="mock-payment-status success">● ชำระเงินสำเร็จ</div>
-      <h3 class="mock-payment-success-title">เครดิตเข้า Wallet แล้ว</h3>
-      <div class="mock-payment-result-row"><span>รายการเติมเงิน</span><strong id="mock-payment-success-amount">฿0.00</strong></div>
-      <div class="mock-payment-result-row"><span>ยอดคงเหลือใหม่</span><strong id="mock-payment-success-balance">฿0.00</strong></div>
-      <p class="mock-payment-note">ขั้นตอนนี้จำลองผลสำเร็จจาก Payment Gateway โดยยังไม่มีการตัดเงินจริง</p>
+      <div class="omise-shell">
+        <div class="omise-topbar"><div class="omise-logo">omise<small>Opn Payments</small></div><span class="omise-status success">● successful</span></div>
+        <div class="omise-body">
+          <div class="omise-result-icon">✓</div>
+          <h2 class="omise-result-title">Payment successful</h2>
+          <div class="omise-amount"><span>ยอดที่ชำระสำเร็จ</span><strong><span id="mock-payment-success-amount">฿0.00</span> <small>THB</small></strong></div>
+          <div class="omise-receipt"><div class="omise-receipt-row"><span>สถานะ</span><strong>successful</strong></div><div class="omise-receipt-row"><span>Webhook</span><strong>mock.payment.complete</strong></div></div>
+          <p class="omise-footer-note">ผลลัพธ์จำลองที่ระบบใช้เป็นเงื่อนไขเครดิต Wallet</p>
+        </div>
+      </div>
+      <article class="mockup-wallet-credit"><div class="wallet-balance"><div class="label">ยอดเงินคงเหลือใหม่</div><div class="value" id="mock-payment-success-balance">฿0.00</div></div><div class="transaction-row"><span>รายการเติมเงิน</span><span class="transaction-amount">เครดิตเข้า Wallet แล้ว</span></div></article>
       <button type="button" class="mock-payment-primary" onclick="closeMockPaymentDialog()">กลับไป Wallet</button>
     </section>
   </dialog>
