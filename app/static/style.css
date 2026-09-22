@@ -1519,3 +1519,175 @@ footer.page-footer {
 @media (max-width: 480px) {
   .wallet-home-summary { align-items: stretch; }
 }
+
+/* PromptPay-style mock screen for the presentation flow. */
+.mock-payment-dialog.mock-payment-scan-mode {
+  width: min(92vw, 480px);
+  max-height: calc(100vh - 24px);
+  padding: 0 24px 22px;
+  overflow: auto;
+  border: 1px solid #334566;
+  border-radius: 26px;
+  background: #0d172c;
+  color: #f8fbff;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .58);
+}
+
+.mock-payment-dialog.mock-payment-scan-mode::backdrop {
+  background: rgba(2, 6, 16, .78);
+  backdrop-filter: blur(6px);
+}
+
+.mock-payment-scan-mode .mock-payment-dialog-header {
+  justify-content: flex-end;
+  padding: 14px 0 4px;
+}
+
+.mock-payment-scan-mode .mock-payment-dialog-header > div,
+.mock-payment-scan-mode .mock-payment-steps,
+.mock-payment-scan-mode #mock-payment-step-scan .mock-payment-status,
+.mock-payment-scan-mode #mock-payment-step-scan .mock-payment-note,
+.mock-payment-scan-mode #mock-payment-step-scan .mock-payment-qr-caption,
+.mock-payment-scan-mode #mock-payment-step-scan .mock-payment-cancel {
+  display: none;
+}
+
+.mock-payment-scan-mode .mock-payment-dialog-header .icon-btn {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(106, 142, 188, .24);
+  color: #d8e4f3;
+  font-size: 22px;
+}
+
+.mock-payment-scan-mode #mock-payment-step-scan {
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f8fbff;
+}
+
+.mock-payment-qr-brand {
+  order: 1;
+  margin: 0 0 10px;
+  padding: 14px 12px;
+  border-radius: 14px;
+  background: #07508b;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.mock-payment-qr-provider {
+  order: 2;
+  color: #9fcaff;
+  font-size: 18px;
+  font-style: italic;
+  font-weight: 700;
+}
+
+.mock-payment-qr-powered {
+  order: 3;
+  margin-top: 2px;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.mock-payment-scan-mode .mock-payment-amount-display {
+  order: 6;
+  margin: 12px 0 0;
+  color: #f8fbff;
+  font-size: 28px;
+}
+
+.mock-payment-scan-mode .mock-qr {
+  order: 4;
+  grid-template-columns: repeat(29, 1fr);
+  gap: 0;
+  width: min(72vw, 300px);
+  height: min(72vw, 300px);
+  margin: 16px auto 0;
+  padding: 10px;
+  border: 8px solid #fff;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: none;
+}
+
+.mock-payment-scan-mode .mock-qr span { min-width: 0; }
+
+.mock-payment-qr-expiry {
+  order: 5;
+  margin-top: 14px;
+  color: #cbd5e1;
+  font-size: 14px;
+}
+
+.mock-payment-qr-expiry strong {
+  color: #ff4b5c;
+  font-size: 16px;
+}
+
+.mock-payment-qr-credit {
+  order: 7;
+  margin-top: 8px;
+  color: #8795ff;
+  font-size: 14px;
+}
+
+.mock-payment-download {
+  order: 8;
+  width: 100%;
+  margin: 18px 0 0;
+  border: 1px solid #5541dc;
+  border-radius: 12px;
+  background: transparent;
+  color: #b6baff;
+}
+
+.mock-payment-waiting {
+  order: 9;
+  margin: 14px 0 0;
+  color: #9aa6bc;
+  font-size: 13px;
+}
+
+.mock-payment-test-action {
+  order: 10;
+  width: auto;
+  margin: 8px auto 0;
+  padding: 5px 10px;
+  border: 0;
+  background: transparent;
+  color: #71809a;
+  font-size: 11px;
+}
+
+.mock-payment-warning {
+  order: 11;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #714018;
+  border-radius: 12px;
+  background: rgba(91, 47, 24, .22);
+  color: #f2b34b;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: left;
+}
+
+@media (max-width: 480px) {
+  .mock-payment-dialog.mock-payment-scan-mode {
+    width: calc(100vw - 20px);
+    padding-left: 16px;
+    padding-right: 16px;
+    border-radius: 22px;
+  }
+}

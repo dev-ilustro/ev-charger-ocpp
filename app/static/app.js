@@ -6,6 +6,8 @@ let currentUserRole = null;
 let currentPricePerKwh = null;
 let mockTopupEnabled = false;
 let activeMockPayment = null;
+let mockPaymentCountdownTimer = null;
+let mockPaymentExpiresAt = null;
 let lastChargePoints = [];
 
 function fmtDate(value) {
@@ -248,6 +250,9 @@ function setMockPaymentStep(step) {
   ["amount", "scan", "success"].forEach((name) => {
     document.getElementById(`mock-payment-step-${name}`).style.display = name === step ? "block" : "none";
   });
+  const dialog = document.getElementById("mock-payment-dialog");
+  dialog?.classList.toggle("mock-payment-scan-mode", step === "scan");
+  dialog?.classList.toggle("mock-payment-success-mode", step === "success");
   const order = ["amount", "scan", "success"];
   document.querySelectorAll("[data-payment-step-indicator]").forEach((indicator) => {
     indicator.classList.toggle("active", order.indexOf(indicator.dataset.paymentStepIndicator) <= order.indexOf(step));
@@ -255,13 +260,22 @@ function setMockPaymentStep(step) {
 }
 
 function resetMockPaymentDialog() {
+  if (mockPaymentCountdownTimer) {
+    clearTimeout(mockPaymentCountdownTimer);
+    mockPaymentCountdownTimer = null;
+  }
+  mockPaymentExpiresAt = null;
   activeMockPayment = null;
   document.getElementById("mock-payment-amount").value = "500";
   document.getElementById("mock-payment-amount-error").style.display = "none";
   document.getElementById("mock-payment-scan-error").style.display = "none";
   document.getElementById("mock-payment-scan-button").disabled = false;
+  document.getElementById("mock-payment-scan-button").textContent = "จำลองชำระสำเร็จ";
+  document.getElementById("mock-payment-countdown").textContent = "10:00";
+  document.getElementById("mock-payment-qr-credit").textContent = "ยอดเข้า Wallet: ฿0.00";
   document.getElementById("mock-payment-scan-button").textContent = "จำลองสแกนสำเร็จ";
   setMockPaymentStep("amount");
+  document.getElementById("mock-payment-scan-button").textContent = "Simulate payment success";
 }
 
 function openMockPaymentDialog() {
@@ -276,25 +290,71 @@ function closeMockPaymentDialog() {
   if (dialog?.open) dialog.close();
 }
 
-function renderMockQr(reference) {
-  const qr = document.getElementById("mock-payment-qr");
-  if (!qr) return;
+function mockQrMatrix(reference, size = 29) {
   const seed = [...reference].reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const cells = [];
   const inFinder = (x, y, ox, oy) => {
     const dx = x - ox;
     const dy = y - oy;
-    if (dx < 0 || dx > 4 || dy < 0 || dy > 4) return null;
-    return dx === 0 || dx === 4 || dy === 0 || dy === 4 || (dx >= 1 && dx <= 3 && dy >= 1 && dy <= 3);
+    if (dx < 0 || dx > 6 || dy < 0 || dy > 6) return null;
+    return dx === 0 || dx === 6 || dy === 0 || dy === 6 || (dx >= 2 && dx <= 4 && dy >= 2 && dy <= 4);
   };
-  for (let y = 0; y < 15; y += 1) {
-    for (let x = 0; x < 15; x += 1) {
-      const finder = inFinder(x, y, 0, 0) ?? inFinder(x, y, 10, 0) ?? inFinder(x, y, 0, 10);
-      const on = finder === null ? ((x * 17 + y * 31 + seed) % 7 < 3) : finder;
-      cells.push(`<span class="${on ? "on" : ""}"></span>`);
+  return Array.from({ length: size }, (_, y) =>
+    Array.from({ length: size }, (_, x) => {
+      const finder = inFinder(x, y, 0, 0) ?? inFinder(x, y, size - 7, 0) ?? inFinder(x, y, 0, size - 7);
+      return finder === null ? (x * 17 + y * 31 + seed) % 9 < 4 : finder;
+    })
+  );
+}
+
+function renderMockQr(reference) {
+  const qr = document.getElementById("mock-payment-qr");
+  if (!qr) return;
+  qr.innerHTML = mockQrMatrix(reference)
+    .flat()
+    .map((on) => `<span class="${on ? "on" : ""}"></span>`)
+    .join("");
+}
+
+function downloadMockQr() {
+  if (!activeMockPayment) return;
+  const matrix = mockQrMatrix(activeMockPayment.reference);
+  const canvas = document.createElement("canvas");
+  const padding = 24;
+  const cellSize = 16;
+  canvas.width = canvas.height = padding * 2 + matrix.length * cellSize;
+  const context = canvas.getContext("2d");
+  context.fillStyle = "#ffffff";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = "#000000";
+  matrix.forEach((row, y) => row.forEach((on, x) => {
+    if (on) context.fillRect(padding + x * cellSize, padding + y * cellSize, cellSize, cellSize);
+  }));
+  const link = document.createElement("a");
+  link.download = `promptpay-${activeMockPayment.reference}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+function startMockPaymentCountdown() {
+  if (mockPaymentCountdownTimer) clearTimeout(mockPaymentCountdownTimer);
+  mockPaymentExpiresAt = Date.now() + 10 * 60 * 1000;
+  const tick = () => {
+    const remaining = Math.max(0, mockPaymentExpiresAt - Date.now());
+    const seconds = Math.floor(remaining / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const countdown = document.getElementById("mock-payment-countdown");
+    const button = document.getElementById("mock-payment-scan-button");
+    if (countdown) countdown.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+    if (remaining <= 0) {
+      if (button) {
+        button.disabled = true;
+        button.textContent = "QR หมดอายุ";
+      }
+      return;
     }
-  }
-  qr.innerHTML = cells.join("");
+    mockPaymentCountdownTimer = setTimeout(tick, 1000);
+  };
+  tick();
 }
 
 async function createMockPayment() {
@@ -313,10 +373,13 @@ async function createMockPayment() {
       body: JSON.stringify({ amount }),
     });
     activeMockPayment = payment;
+    document.getElementById("mock-payment-qr-credit").textContent = `ยอดเข้า Wallet: ฿${payment.amount.toFixed(2)}`;
     document.getElementById("mock-payment-pending-amount").textContent = `฿${payment.amount.toFixed(2)}`;
     document.getElementById("mock-payment-reference").textContent = payment.reference;
     renderMockQr(payment.reference);
     setMockPaymentStep("scan");
+    document.getElementById("mock-payment-pending-amount").textContent = `฿${payment.amount.toFixed(2)} THB`;
+    startMockPaymentCountdown();
   } catch (err) {
     errorEl.textContent = `สร้างรายการไม่สำเร็จ: ${err.message}`;
     errorEl.style.display = "block";
@@ -332,6 +395,10 @@ async function completeMockPayment() {
   errorEl.style.display = "none";
   try {
     const result = await fetchJSON(`${API}/me/wallet/mock-payment/${activeMockPayment.id}/complete`, { method: "POST" });
+    if (mockPaymentCountdownTimer) {
+      clearTimeout(mockPaymentCountdownTimer);
+      mockPaymentCountdownTimer = null;
+    }
     document.getElementById("mock-payment-success-amount").textContent = `+ ฿${result.amount.toFixed(2)}`;
     document.getElementById("mock-payment-success-balance").textContent = `฿${result.wallet_balance.toFixed(2)}`;
     setMockPaymentStep("success");
