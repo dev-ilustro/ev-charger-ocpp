@@ -22,7 +22,7 @@ document.getElementById("register-form").addEventListener("submit", async (e) =>
       const err = await res.json().catch(() => ({ detail: res.statusText }));
       throw new Error(err.detail || "สมัครสมาชิกไม่สำเร็จ");
     }
-    window.location.href = "/";
+    window.location.href = "/app";
   } catch (err) {
     errorEl.textContent = err.message;
     errorEl.style.display = "block";

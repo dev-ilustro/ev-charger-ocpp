@@ -1,6 +1,7 @@
 function getNextParam() {
   const params = new URLSearchParams(window.location.search);
-  return params.get("next") || "/";
+  const next = params.get("next") || "/app";
+  return next.startsWith("/") && !next.startsWith("//") ? next : "/app";
 }
 
 document.getElementById("login-form").addEventListener("submit", async (e) => {

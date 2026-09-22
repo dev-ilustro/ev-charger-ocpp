@@ -1504,4 +1504,25 @@ def admin_restore_backup(file: UploadFile = File(...), user: dict = Depends(requ
 
 
 # เสิร์ฟหน้า dashboard (ต้องอยู่หลัง route อื่นๆ ทั้งหมด)
+APP_SHELL_PATH = os.path.join("app", "static", "index.html")
+
+
+@app.get("/app", include_in_schema=False)
+@app.get("/app/", include_in_schema=False)
+@app.get("/home", include_in_schema=False)
+@app.get("/home/", include_in_schema=False)
+@app.get("/wallet", include_in_schema=False)
+@app.get("/wallet/", include_in_schema=False)
+@app.get("/settings", include_in_schema=False)
+@app.get("/settings/", include_in_schema=False)
+@app.get("/transactions", include_in_schema=False)
+@app.get("/transactions/", include_in_schema=False)
+@app.get("/events", include_in_schema=False)
+@app.get("/events/", include_in_schema=False)
+@app.get("/charger/{charge_point_id}", include_in_schema=False)
+@app.get("/charger/{charge_point_id}/", include_in_schema=False)
+def serve_app_route(charge_point_id: Optional[str] = None):
+    return FileResponse(APP_SHELL_PATH)
+
+
 app.mount("/", StaticFiles(directory="app/static", html=True), name="static")

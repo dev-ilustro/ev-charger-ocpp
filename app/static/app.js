@@ -45,7 +45,8 @@ async function fetchJSON(url, options = {}) {
   }
 
   if (res.status === 401) {
-    window.location.href = "/login.html?next=" + encodeURIComponent(window.location.pathname);
+    const next = window.location.pathname + window.location.search + window.location.hash;
+    window.location.href = "/login.html?next=" + encodeURIComponent(next);
     throw new Error("กรุณาเข้าสู่ระบบ");
   }
   if (!res.ok) {
@@ -56,13 +57,73 @@ async function fetchJSON(url, options = {}) {
 }
 
 // ---------- Screen navigation ----------
-function switchScreen(name) {
+function pathForScreen(name) {
+  if (name === "home") return "/app";
+  if (name === "transactions") return "/transactions";
+  if (name === "events") return "/events";
+  if (name === "settings") return currentUserRole === "customer" ? "/wallet" : "/settings";
+  if (name === "detail" && currentDetailCpId) return `/charger/${encodeURIComponent(currentDetailCpId)}`;
+  return "/app";
+}
+
+function routeFromLocation() {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  if (path === "/" || path === "/app" || path === "/home") return { screen: "home" };
+  if (path === "/wallet" || path === "/settings") return { screen: "settings" };
+  if (path === "/transactions") return { screen: "transactions" };
+  if (path === "/events") return { screen: "events" };
+  if (path.startsWith("/charger/") && path.length > "/charger/".length) {
+    return { screen: "detail", chargePointId: decodeURIComponent(path.slice("/charger/".length)) };
+  }
+  return null;
+}
+
+function clearDetailState() {
+  if (detailRefreshTimer) {
+    clearInterval(detailRefreshTimer);
+    detailRefreshTimer = null;
+  }
+  currentDetailCpId = null;
+  currentDetailCp = null;
+}
+
+function applyRoute() {
+  const route = routeFromLocation();
+  if (!route) {
+    clearDetailState();
+    history.replaceState({}, "", "/app");
+    switchScreen("home", { fromRoute: true });
+    return;
+  }
+  if (route.screen === "home" && window.location.pathname === "/") {
+    history.replaceState({}, "", "/app");
+  }
+  if (route.screen === "detail") {
+    openDetailScreen(route.chargePointId, { fromRoute: true });
+    return;
+  }
+  clearDetailState();
+  switchScreen(route.screen, { fromRoute: true });
+}
+
+window.addEventListener("popstate", applyRoute);
+
+function switchScreen(name, options = {}) {
+  if (name !== "detail" && currentDetailCpId) {
+    clearDetailState();
+  }
   document.querySelectorAll(".screen").forEach((el) => el.classList.remove("active"));
   const target = document.getElementById(`screen-${name}`);
   if (target) target.classList.add("active");
   document.querySelectorAll(".bottom-nav-item").forEach((el) => {
     el.classList.toggle("active", el.dataset.screen === name);
   });
+  if (!options.fromRoute) {
+    const nextPath = pathForScreen(name);
+    if (window.location.pathname !== nextPath) {
+      history.pushState({}, "", nextPath);
+    }
+  }
   window.scrollTo(0, 0);
   if (name === "transactions") loadTransactionsScreen();
   if (name === "events") loadEventsScreen();
@@ -631,7 +692,7 @@ async function refreshDetailInfoGrid(cpId) {
   return cp;
 }
 
-async function openDetailScreen(cpId) {
+async function openDetailScreen(cpId, options = {}) {
   currentDetailCpId = cpId;
   currentDetailCp = null;
   document.getElementById("detail-cp-id").textContent = cpId;
@@ -651,7 +712,7 @@ async function openDetailScreen(cpId) {
   document.getElementById("config-body").innerHTML = "";
   document.getElementById("availability-status").style.display = "none";
 
-  switchScreen("detail");
+  switchScreen("detail", options);
 
   if (detailRefreshTimer) clearInterval(detailRefreshTimer);
   detailRefreshTimer = setInterval(() => refreshDetailInfoGrid(cpId), 5000);
@@ -694,12 +755,7 @@ async function openDetailScreen(cpId) {
 }
 
 function closeDetailScreen() {
-  if (detailRefreshTimer) {
-    clearInterval(detailRefreshTimer);
-    detailRefreshTimer = null;
-  }
-  currentDetailCpId = null;
-  currentDetailCp = null;
+  clearDetailState();
   switchScreen("home");
 }
 
@@ -1063,6 +1119,7 @@ async function loadVersionBadge() {
 
 (async function start() {
   await initAuth();
+  applyRoute();
   loadVersionBadge();
   refreshAll();
   setInterval(refreshAll, 5000);
