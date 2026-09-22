@@ -157,6 +157,23 @@ class WalletLedgerDB(Base):
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
 
 
+class WalletPaymentDB(Base):
+    """รายการเติมเงินก่อนเชื่อมต่อ payment gateway จริง"""
+
+    __tablename__ = "wallet_payments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    reference = Column(String, unique=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True)
+    amount = Column(Float)
+    method = Column(String, default="promptpay")
+    provider = Column(String, default="mock")
+    status = Column(String, default="pending")  # pending / successful / expired
+    provider_payment_id = Column(String, nullable=True)
+    created_at = Column(DateTime, default=datetime.datetime.utcnow)
+    completed_at = Column(DateTime, nullable=True)
+
+
 class SettingsDB(Base):
     """ค่าตั้งค่าระบบ (แถวเดียว, id เป็น 1 เสมอ)"""
 

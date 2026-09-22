@@ -13,6 +13,7 @@ import re
 import tempfile
 from datetime import datetime, timedelta
 from typing import Optional
+from uuid import uuid4
 
 from fastapi import (
     Cookie,
@@ -53,6 +54,7 @@ from app.database import (
     TransactionDB,
     UserDB,
     WalletLedgerDB,
+    WalletPaymentDB,
     get_settings,
     init_db,
     resolve_card_authorization,
@@ -865,6 +867,101 @@ def set_my_budget(body: MyBudgetRequest, user: dict = Depends(get_current_user))
 
 class MyWalletTopupRequest(BaseModel):
     amount: float
+
+
+class MockWalletPaymentRequest(BaseModel):
+    amount: float
+
+
+def _serialize_wallet_payment(payment: WalletPaymentDB) -> dict:
+    return {
+        "id": payment.id,
+        "reference": payment.reference,
+        "amount": payment.amount,
+        "method": payment.method,
+        "provider": payment.provider,
+        "status": payment.status,
+        "provider_payment_id": payment.provider_payment_id,
+        "created_at": payment.created_at,
+        "completed_at": payment.completed_at,
+    }
+
+
+@app.post("/api/me/wallet/mock-payment")
+def create_mock_wallet_payment(body: MockWalletPaymentRequest, user: dict = Depends(get_current_user)):
+    """สร้างรายการเติมเงินจำลอง โดยยังไม่เพิ่มยอดจนกว่าจะกดจำลองสแกนสำเร็จ"""
+    if body.amount <= 0 or body.amount > 100000:
+        raise HTTPException(status_code=400, detail="จำนวนเงินต้องอยู่ระหว่าง 0.01 ถึง 100,000 บาท")
+
+    db = SessionLocal()
+    try:
+        if not get_settings(db).allow_customer_mock_topup:
+            raise HTTPException(status_code=403, detail="ยังไม่ได้เปิดโหมดเติมเงินจำลอง")
+        if not db.get(UserDB, int(user["sub"])):
+            raise HTTPException(status_code=404, detail="ไม่พบ user")
+
+        payment = WalletPaymentDB(
+            reference=f"MOCK-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{uuid4().hex[:6].upper()}",
+            user_id=int(user["sub"]),
+            amount=round(body.amount, 2),
+            method="promptpay",
+            provider="mock",
+            status="pending",
+        )
+        db.add(payment)
+        db.commit()
+        db.refresh(payment)
+        return _serialize_wallet_payment(payment)
+    finally:
+        db.close()
+
+
+@app.post("/api/me/wallet/mock-payment/{payment_id}/complete")
+def complete_mock_wallet_payment(payment_id: int, user: dict = Depends(get_current_user)):
+    """จำลองผลสำเร็จจาก QR และเครดิต Wallet แบบ idempotent"""
+    db = SessionLocal()
+    try:
+        payment = (
+            db.query(WalletPaymentDB)
+            .filter(WalletPaymentDB.id == payment_id, WalletPaymentDB.user_id == int(user["sub"]))
+            .first()
+        )
+        if not payment:
+            raise HTTPException(status_code=404, detail="ไม่พบรายการเติมเงิน")
+
+        row = db.get(UserDB, int(user["sub"]))
+        if not row:
+            raise HTTPException(status_code=404, detail="ไม่พบ user")
+
+        if payment.status == "successful":
+            return {
+                **_serialize_wallet_payment(payment),
+                "wallet_balance": row.wallet_balance,
+                "credited": False,
+            }
+        if payment.status != "pending":
+            raise HTTPException(status_code=409, detail="รายการนี้ไม่อยู่ในสถานะรอชำระเงิน")
+
+        payment.status = "successful"
+        payment.provider_payment_id = f"mock_charge_{uuid4().hex[:12]}"
+        payment.completed_at = datetime.utcnow()
+        row.wallet_balance += payment.amount
+        db.add(WalletLedgerDB(
+            user_id=row.id,
+            amount=payment.amount,
+            reason="topup",
+            note=f"mock payment {payment.reference}",
+            created_by=user["username"],
+        ))
+        db.commit()
+        db.refresh(payment)
+        return {
+            **_serialize_wallet_payment(payment),
+            "wallet_balance": row.wallet_balance,
+            "credited": True,
+        }
+    finally:
+        db.close()
 
 
 @app.post("/api/me/wallet/topup")

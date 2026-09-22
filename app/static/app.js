@@ -5,6 +5,7 @@ let currentDetailCp = null;
 let currentUserRole = null;
 let currentPricePerKwh = null;
 let mockTopupEnabled = false;
+let activeMockPayment = null;
 let lastChargePoints = [];
 
 function fmtDate(value) {
@@ -174,6 +175,111 @@ async function topUpMyWallet() {
     showToast("เติมเงิน (ทดสอบ) สำเร็จ", "success");
   } catch (err) {
     showToast("เติมเงินไม่สำเร็จ: " + err.message, "error");
+  }
+}
+
+// ---------- Mock payment flow (replace the provider calls with Omise later) ----------
+function setMockPaymentAmount(amount) {
+  document.getElementById("mock-payment-amount").value = amount;
+}
+
+function setMockPaymentStep(step) {
+  ["amount", "scan", "success"].forEach((name) => {
+    document.getElementById(`mock-payment-step-${name}`).style.display = name === step ? "block" : "none";
+  });
+  const order = ["amount", "scan", "success"];
+  document.querySelectorAll("[data-payment-step-indicator]").forEach((indicator) => {
+    indicator.classList.toggle("active", order.indexOf(indicator.dataset.paymentStepIndicator) <= order.indexOf(step));
+  });
+}
+
+function resetMockPaymentDialog() {
+  activeMockPayment = null;
+  document.getElementById("mock-payment-amount").value = "500";
+  document.getElementById("mock-payment-amount-error").style.display = "none";
+  document.getElementById("mock-payment-scan-error").style.display = "none";
+  document.getElementById("mock-payment-scan-button").disabled = false;
+  document.getElementById("mock-payment-scan-button").textContent = "จำลองสแกนสำเร็จ";
+  setMockPaymentStep("amount");
+}
+
+function openMockPaymentDialog() {
+  const dialog = document.getElementById("mock-payment-dialog");
+  if (!dialog) return;
+  resetMockPaymentDialog();
+  dialog.showModal();
+}
+
+function closeMockPaymentDialog() {
+  const dialog = document.getElementById("mock-payment-dialog");
+  if (dialog?.open) dialog.close();
+}
+
+function renderMockQr(reference) {
+  const qr = document.getElementById("mock-payment-qr");
+  if (!qr) return;
+  const seed = [...reference].reduce((sum, char) => sum + char.charCodeAt(0), 0);
+  const cells = [];
+  const inFinder = (x, y, ox, oy) => {
+    const dx = x - ox;
+    const dy = y - oy;
+    if (dx < 0 || dx > 4 || dy < 0 || dy > 4) return null;
+    return dx === 0 || dx === 4 || dy === 0 || dy === 4 || (dx >= 1 && dx <= 3 && dy >= 1 && dy <= 3);
+  };
+  for (let y = 0; y < 15; y += 1) {
+    for (let x = 0; x < 15; x += 1) {
+      const finder = inFinder(x, y, 0, 0) ?? inFinder(x, y, 10, 0) ?? inFinder(x, y, 0, 10);
+      const on = finder === null ? ((x * 17 + y * 31 + seed) % 7 < 3) : finder;
+      cells.push(`<span class="${on ? "on" : ""}"></span>`);
+    }
+  }
+  qr.innerHTML = cells.join("");
+}
+
+async function createMockPayment() {
+  const amount = parseFloat(document.getElementById("mock-payment-amount").value);
+  const errorEl = document.getElementById("mock-payment-amount-error");
+  if (!amount || amount <= 0 || amount > 100000) {
+    errorEl.textContent = "กรุณาระบุยอดเงินระหว่าง 0.01 ถึง 100,000 บาท";
+    errorEl.style.display = "block";
+    return;
+  }
+
+  try {
+    const payment = await fetchJSON(`${API}/me/wallet/mock-payment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount }),
+    });
+    activeMockPayment = payment;
+    document.getElementById("mock-payment-pending-amount").textContent = `฿${payment.amount.toFixed(2)}`;
+    document.getElementById("mock-payment-reference").textContent = payment.reference;
+    renderMockQr(payment.reference);
+    setMockPaymentStep("scan");
+  } catch (err) {
+    errorEl.textContent = `สร้างรายการไม่สำเร็จ: ${err.message}`;
+    errorEl.style.display = "block";
+  }
+}
+
+async function completeMockPayment() {
+  if (!activeMockPayment) return;
+  const button = document.getElementById("mock-payment-scan-button");
+  const errorEl = document.getElementById("mock-payment-scan-error");
+  button.disabled = true;
+  button.textContent = "กำลังตรวจสอบ...";
+  errorEl.style.display = "none";
+  try {
+    const result = await fetchJSON(`${API}/me/wallet/mock-payment/${activeMockPayment.id}/complete`, { method: "POST" });
+    document.getElementById("mock-payment-success-amount").textContent = `+ ฿${result.amount.toFixed(2)}`;
+    document.getElementById("mock-payment-success-balance").textContent = `฿${result.wallet_balance.toFixed(2)}`;
+    setMockPaymentStep("success");
+    await refreshWalletCard();
+  } catch (err) {
+    button.disabled = false;
+    button.textContent = "จำลองสแกนสำเร็จ";
+    errorEl.textContent = `ตรวจสอบรายการไม่สำเร็จ: ${err.message}`;
+    errorEl.style.display = "block";
   }
 }
 
@@ -946,6 +1052,9 @@ async function loadVersionBadge() {
     mockTopupEnabled = !!s.allow_customer_mock_topup;
     if (currentUserRole === "customer") {
       document.getElementById("wallet-topup-section").style.display = mockTopupEnabled ? "block" : "none";
+      document.querySelectorAll(".wallet-home-action").forEach((el) => {
+        el.style.display = mockTopupEnabled ? "" : "none";
+      });
     }
   } catch (err) {
     // เก็บค่า default ในหน้า HTML ไว้ถ้าโหลดไม่สำเร็จ

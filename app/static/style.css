@@ -1347,3 +1347,131 @@ footer.page-footer {
     display: none;
   }
 }
+
+/* Mock payment flow: mirrors the future gateway flow without charging real money. */
+.wallet-home-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+}
+
+.wallet-home-summary-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.wallet-home-action {
+  margin: 0;
+  min-height: 38px;
+}
+
+.mock-payment-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px;
+  border: 1px solid rgba(14, 165, 233, .35);
+  border-radius: 12px;
+  background: rgba(14, 165, 233, .08);
+}
+
+.mock-payment-callout strong { color: var(--text-primary); }
+.mock-payment-callout p { margin: 4px 0 0; color: var(--text-secondary); font-size: 12px; line-height: 1.5; }
+.mock-payment-callout button { flex: 0 0 auto; margin: 0; }
+
+.mock-payment-dialog {
+  width: min(94vw, 430px);
+  padding: 20px;
+}
+
+.mock-payment-dialog-header,
+.mock-payment-result-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mock-payment-dialog-header h3 { margin: 3px 0 0; font-size: 20px; }
+.mock-payment-kicker { color: var(--primary); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
+.mock-payment-dialog-header .icon-btn { margin: 0; padding: 8px 10px; min-height: 36px; }
+
+.mock-payment-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  margin: 18px 0;
+}
+
+.mock-payment-steps span {
+  padding: 7px 4px;
+  color: var(--text-secondary);
+  background: var(--surface-2);
+  border-radius: 7px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.mock-payment-steps span.active { color: #fff; background: var(--primary); }
+.mock-payment-step { text-align: center; }
+.mock-payment-note { margin: 0 0 16px; color: var(--text-secondary); font-size: 12px; line-height: 1.55; }
+.mock-payment-label { display: block; margin-bottom: 7px; color: var(--text-secondary); text-align: left; font-size: 13px; }
+
+.mock-payment-amount-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+.mock-payment-amount-row span { color: var(--text-secondary); font-size: 18px; }
+.mock-payment-amount-row input { flex: 1; width: 100%; padding: 12px 0; color: var(--text-primary); background: transparent; border: 0; outline: 0; font-family: var(--font-mono); font-size: 24px; }
+
+.mock-payment-quick-amounts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 12px 0 18px; }
+.mock-payment-quick-amounts button { min-height: 36px; margin: 0; padding: 6px 4px; font-size: 12px; }
+.mock-payment-primary { width: 100%; margin: 0; }
+.mock-payment-cancel { width: 100%; margin: 8px 0 0; }
+
+.mock-payment-status { display: inline-block; margin-bottom: 12px; padding: 6px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
+.mock-payment-status.pending { color: #fbbf24; background: rgba(245, 158, 11, .12); }
+.mock-payment-status.success { color: #4ade80; background: rgba(34, 197, 94, .12); }
+.mock-payment-amount-display { margin-bottom: 5px; color: var(--text-primary); font-family: var(--font-mono); font-size: 29px; font-weight: 700; }
+.mock-payment-qr-caption { margin: 10px 0 16px; color: var(--text-secondary); font-size: 11px; }
+
+.mock-qr {
+  display: grid;
+  grid-template-columns: repeat(15, 1fr);
+  gap: 2px;
+  width: 184px;
+  height: 184px;
+  margin: 12px auto 0;
+  padding: 9px;
+  background: #fff;
+  border: 8px solid #fff;
+  border-radius: 4px;
+  box-shadow: 0 0 0 1px var(--border), 0 8px 20px rgba(0, 0, 0, .25);
+}
+
+.mock-qr span { background: #fff; }
+.mock-qr span.on { background: #101820; }
+.mock-payment-success-icon { display: grid; place-items: center; width: 58px; height: 58px; margin: 2px auto 14px; color: #fff; background: #16a05d; border-radius: 50%; font-size: 32px; font-weight: 700; }
+.mock-payment-success-title { margin: 3px 0 20px; font-size: 19px; }
+.mock-payment-result-row { padding: 11px 0; border-bottom: 1px solid var(--border); color: var(--text-secondary); font-size: 13px; text-align: left; }
+.mock-payment-result-row strong { color: var(--text-primary); font-family: var(--font-mono); }
+
+@media (max-width: 480px) {
+  .wallet-home-summary { align-items: stretch; flex-direction: column; }
+  .wallet-home-action { width: 100%; }
+  .mock-payment-callout { align-items: stretch; flex-direction: column; }
+  .mock-payment-callout button { width: 100%; }
+}

@@ -26,10 +26,13 @@
     <section class="screen active" id="screen-home" data-screen="home">
       <div class="overview-strip" id="overview-strip"></div>
 
-      <div class="card" id="wallet-home-summary" style="display:none; padding:14px 16px; cursor:pointer" onclick="switchScreen('settings')">
-        <div style="display:flex; align-items:center; justify-content:space-between">
-          <span style="color:var(--text-secondary); font-size:13px">💰 ยอดเงินคงเหลือ (แตะเพื่อเติมเงิน/ตั้งงบ)</span>
+      <div class="card wallet-home-summary" id="wallet-home-summary" style="display:none">
+        <div class="wallet-home-summary-main" onclick="switchScreen('settings')">
+          <span style="color:var(--text-secondary); font-size:13px">💰 ยอดเงินคงเหลือ</span>
           <strong id="wallet-home-chip-value" style="font-family:var(--font-mono); font-size:18px">-</strong>
+        </div>
+        <button type="button" class="secondary wallet-home-action" onclick="event.stopPropagation(); openMockPaymentDialog()">เติมเงิน</button>
+      </div>
         </div>
       </div>
 
@@ -172,14 +175,13 @@
           </div>
         </div>
         <div class="detail-section" id="wallet-topup-section" style="display:none">
-          <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px">
-            เติมเงินเข้ากระเป๋า (⚠️ โหมดทดสอบ ยังไม่เชื่อมระบบชำระเงินจริง เงินไม่ได้เคลื่อนไหวจริง)
-          </p>
-          <label>จำนวนเงิน (บาท)
-            <input type="number" id="wallet-topup-input" min="0.01" step="0.01" style="width:140px" />
-          </label>
-          <button onclick="topUpMyWallet()">เติมเงิน (ทดสอบ)</button>
-          <p id="wallet-topup-msg" class="form-msg" style="display:none"></p>
+          <div class="mock-payment-callout">
+            <div>
+              <strong>เติมเงินแบบจำลอง</strong>
+              <p>ลอง Flow จริงก่อนต่อ Omise: เลือกยอด → สแกน QR จำลอง → ระบบตรวจสอบ → เครดิตเข้า Wallet</p>
+            </div>
+            <button type="button" onclick="openMockPaymentDialog()">เริ่มเติมเงิน</button>
+          </div>
         </div>
         <div class="detail-section">
           <p style="font-size:13px; color:var(--text-secondary); margin:0 0 12px">
@@ -253,8 +255,62 @@
     </form>
   </dialog>
 
+  <dialog id="mock-payment-dialog" class="mock-payment-dialog">
+    <div class="mock-payment-dialog-header">
+      <div>
+        <span class="mock-payment-kicker">MOCK PAYMENT</span>
+        <h3>เติมเงินเข้า Wallet</h3>
+      </div>
+      <button type="button" class="icon-btn" onclick="closeMockPaymentDialog()" aria-label="ปิด">✕</button>
+    </div>
+
+    <div class="mock-payment-steps" aria-label="ขั้นตอนการเติมเงิน">
+      <span data-payment-step-indicator="amount">1 ยอดเงิน</span>
+      <span data-payment-step-indicator="scan">2 สแกน</span>
+      <span data-payment-step-indicator="success">3 สำเร็จ</span>
+    </div>
+
+    <section id="mock-payment-step-amount" class="mock-payment-step">
+      <p class="mock-payment-note">โหมดทดสอบ: ยังไม่เชื่อมต่อ Omise และจะไม่ตัดเงินจริง</p>
+      <label class="mock-payment-label" for="mock-payment-amount">จำนวนเงินที่ต้องการเติม</label>
+      <div class="mock-payment-amount-row">
+        <span>฿</span>
+        <input id="mock-payment-amount" type="number" min="1" max="100000" step="0.01" value="500" />
+      </div>
+      <div class="mock-payment-quick-amounts">
+        <button type="button" class="secondary" onclick="setMockPaymentAmount(100)">฿100</button>
+        <button type="button" class="secondary" onclick="setMockPaymentAmount(300)">฿300</button>
+        <button type="button" class="secondary" onclick="setMockPaymentAmount(500)">฿500</button>
+        <button type="button" class="secondary" onclick="setMockPaymentAmount(1000)">฿1,000</button>
+      </div>
+      <button type="button" class="mock-payment-primary" onclick="createMockPayment()">สร้าง QR จำลอง</button>
+      <p id="mock-payment-amount-error" class="form-msg" style="display:none"></p>
+    </section>
+
+    <section id="mock-payment-step-scan" class="mock-payment-step" style="display:none">
+      <div class="mock-payment-status pending">● รอการสแกน</div>
+      <div class="mock-payment-amount-display" id="mock-payment-pending-amount">฿0.00</div>
+      <p class="mock-payment-note">รายการ <strong id="mock-payment-reference">-</strong></p>
+      <div class="mock-qr" id="mock-payment-qr" role="img" aria-label="QR จำลองสำหรับการทดสอบ"></div>
+      <p class="mock-payment-qr-caption">QR จำลองสำหรับนำเสนอเท่านั้น</p>
+      <button type="button" class="mock-payment-primary" id="mock-payment-scan-button" onclick="completeMockPayment()">จำลองสแกนสำเร็จ</button>
+      <button type="button" class="secondary mock-payment-cancel" onclick="closeMockPaymentDialog()">ยกเลิก</button>
+      <p id="mock-payment-scan-error" class="form-msg" style="display:none"></p>
+    </section>
+
+    <section id="mock-payment-step-success" class="mock-payment-step" style="display:none">
+      <div class="mock-payment-success-icon">✓</div>
+      <div class="mock-payment-status success">● ชำระเงินสำเร็จ</div>
+      <h3 class="mock-payment-success-title">เครดิตเข้า Wallet แล้ว</h3>
+      <div class="mock-payment-result-row"><span>รายการเติมเงิน</span><strong id="mock-payment-success-amount">฿0.00</strong></div>
+      <div class="mock-payment-result-row"><span>ยอดคงเหลือใหม่</span><strong id="mock-payment-success-balance">฿0.00</strong></div>
+      <p class="mock-payment-note">ขั้นตอนนี้จำลองผลสำเร็จจาก Payment Gateway โดยยังไม่มีการตัดเงินจริง</p>
+      <button type="button" class="mock-payment-primary" onclick="closeMockPaymentDialog()">กลับไป Wallet</button>
+    </section>
+  </dialog>
+
   <div id="toast-container" class="toast-container"></div>
 
-  <script src="app.js?v=32"></script>
+  <script src="app.js?v=33"></script>
 </body>
 </html>
