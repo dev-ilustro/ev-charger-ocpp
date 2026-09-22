@@ -2,6 +2,7 @@ const API = "/api";
 let lastUsers = [];
 
 const TAB_TITLES = {
+  "wallet-payments-tab": "Wallet Logs",
   "settings-tab": "ตั้งค่าระบบ",
   "changelog-tab": "Change Log",
   "users-tab": "ผู้ใช้งาน",
@@ -74,6 +75,7 @@ async function init() {
   loadBackups();
   loadChargePointsAdmin();
   loadCardTaps();
+  loadWalletPayments();
 }
 
 document.getElementById("logout-btn").addEventListener("click", async () => {
@@ -675,6 +677,37 @@ async function loadCardTaps() {
       .join("");
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="5">โหลดรายการไม่สำเร็จ: ${err.message}</td></tr>`;
+  }
+}
+
+// ---------- Wallet payment logs ----------
+function walletPaymentStatusClass(status) {
+  if (status === "successful") return "online";
+  if (status === "pending") return "preparing";
+  return "offline";
+}
+
+async function loadWalletPayments() {
+  const tbody = document.getElementById("wallet-payments-body");
+  if (!tbody) return;
+  try {
+    const rows = await fetchJSON(`${API}/admin/wallet/payments?limit=200`);
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7">ยังไม่มีรายการเติมเงิน</td></tr>`;
+      return;
+    }
+    tbody.innerHTML = rows.map((r) => `
+      <tr>
+        <td>${fmtDate(r.created_at)}</td>
+        <td>${r.full_name || r.username || `User #${r.user_id}`}</td>
+        <td><code>${r.reference || "-"}</code></td>
+        <td><strong>฿${Number(r.amount || 0).toFixed(2)}</strong></td>
+        <td>${r.method || "-"} / ${r.provider || "-"}</td>
+        <td><span class="badge ${walletPaymentStatusClass(r.status)}">${r.status || "-"}</span></td>
+        <td>${fmtDate(r.completed_at)}</td>
+      </tr>`).join("");
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="7">โหลดรายการไม่สำเร็จ: ${err.message}</td></tr>`;
   }
 }
 

@@ -7,6 +7,7 @@ Entry point ของแอป: รวม
 """
 
 import asyncio
+import json
 import logging
 import os
 import re
@@ -873,6 +874,14 @@ class MockWalletPaymentRequest(BaseModel):
     amount: float
 
 
+def _add_wallet_event(db, action: str, payload: dict) -> None:
+    db.add(EventLogDB(
+        charge_point_id=None,
+        action=action,
+        payload=json.dumps(payload, default=str, ensure_ascii=False),
+    ))
+
+
 def _serialize_wallet_payment(payment: WalletPaymentDB) -> dict:
     return {
         "id": payment.id,
@@ -909,6 +918,18 @@ def create_mock_wallet_payment(body: MockWalletPaymentRequest, user: dict = Depe
             status="pending",
         )
         db.add(payment)
+        db.flush()
+        _add_wallet_event(db, "WalletPaymentCreated", {
+            "payment_id": payment.id,
+            "reference": payment.reference,
+            "user_id": payment.user_id,
+            "username": user["username"],
+            "amount": payment.amount,
+            "method": payment.method,
+            "provider": payment.provider,
+            "status": payment.status,
+            "source": "customer_mock_payment",
+        })
         db.commit()
         db.refresh(payment)
         return _serialize_wallet_payment(payment)
@@ -942,17 +963,35 @@ def complete_mock_wallet_payment(payment_id: int, user: dict = Depends(get_curre
         if payment.status != "pending":
             raise HTTPException(status_code=409, detail="รายการนี้ไม่อยู่ในสถานะรอชำระเงิน")
 
+        balance_before = row.wallet_balance
         payment.status = "successful"
         payment.provider_payment_id = f"mock_charge_{uuid4().hex[:12]}"
         payment.completed_at = datetime.utcnow()
         row.wallet_balance += payment.amount
-        db.add(WalletLedgerDB(
+        ledger = WalletLedgerDB(
             user_id=row.id,
             amount=payment.amount,
             reason="topup",
             note=f"mock payment {payment.reference}",
             created_by=user["username"],
-        ))
+        )
+        db.add(ledger)
+        db.flush()
+        _add_wallet_event(db, "WalletPaymentSuccessful", {
+            "payment_id": payment.id,
+            "ledger_id": ledger.id,
+            "reference": payment.reference,
+            "user_id": row.id,
+            "username": user["username"],
+            "amount": payment.amount,
+            "method": payment.method,
+            "provider": payment.provider,
+            "provider_payment_id": payment.provider_payment_id,
+            "wallet_balance_before": balance_before,
+            "wallet_balance_after": row.wallet_balance,
+            "status": payment.status,
+            "source": "customer_mock_payment",
+        })
         db.commit()
         db.refresh(payment)
         return {
@@ -960,6 +999,22 @@ def complete_mock_wallet_payment(payment_id: int, user: dict = Depends(get_curre
             "wallet_balance": row.wallet_balance,
             "credited": True,
         }
+    finally:
+        db.close()
+
+
+@app.get("/api/me/wallet/payments")
+def list_my_wallet_payments(limit: int = 50, user: dict = Depends(get_current_user)):
+    db = SessionLocal()
+    try:
+        rows = (
+            db.query(WalletPaymentDB)
+            .filter(WalletPaymentDB.user_id == int(user["sub"]))
+            .order_by(WalletPaymentDB.id.desc())
+            .limit(max(1, min(limit, 200)))
+            .all()
+        )
+        return [_serialize_wallet_payment(payment) for payment in rows]
     finally:
         db.close()
 
@@ -977,14 +1032,28 @@ def self_wallet_topup(body: MyWalletTopupRequest, user: dict = Depends(get_curre
         row = db.get(UserDB, int(user["sub"]))
         if not row:
             raise HTTPException(status_code=404, detail="ไม่พบ user")
+        balance_before = row.wallet_balance
         row.wallet_balance += body.amount
-        db.add(WalletLedgerDB(
+        ledger = WalletLedgerDB(
             user_id=row.id,
             amount=body.amount,
             reason="topup",
             note="self-service mock top-up",
             created_by=user["username"],
-        ))
+        )
+        db.add(ledger)
+        db.flush()
+        _add_wallet_event(db, "WalletTopupSuccessful", {
+            "ledger_id": ledger.id,
+            "user_id": row.id,
+            "username": user["username"],
+            "amount": body.amount,
+            "method": "direct_mock",
+            "provider": "mock",
+            "wallet_balance_before": balance_before,
+            "wallet_balance_after": row.wallet_balance,
+            "source": "legacy_direct_topup",
+        })
         db.commit()
         return {"wallet_balance": row.wallet_balance}
     finally:
@@ -1225,6 +1294,34 @@ class WalletTopupRequest(BaseModel):
     note: Optional[str] = None
 
 
+@app.get("/api/admin/wallet/payments")
+def admin_list_wallet_payments(
+    user_id: Optional[int] = None,
+    status: Optional[str] = None,
+    limit: int = 100,
+    user: dict = Depends(require_admin),
+):
+    db = SessionLocal()
+    try:
+        query = db.query(WalletPaymentDB)
+        if user_id is not None:
+            query = query.filter(WalletPaymentDB.user_id == user_id)
+        if status:
+            query = query.filter(WalletPaymentDB.status == status)
+        rows = query.order_by(WalletPaymentDB.id.desc()).limit(max(1, min(limit, 500))).all()
+        users = {u.id: u for u in db.query(UserDB).all()}
+        result = []
+        for payment in rows:
+            item = _serialize_wallet_payment(payment)
+            owner = users.get(payment.user_id)
+            item["username"] = owner.username if owner else None
+            item["full_name"] = owner.full_name if owner else None
+            result.append(item)
+        return result
+    finally:
+        db.close()
+
+
 @app.post("/api/admin/users/{user_id}/wallet/topup")
 def admin_wallet_topup(user_id: int, body: WalletTopupRequest, user: dict = Depends(require_admin)):
     if body.amount <= 0:
@@ -1234,14 +1331,30 @@ def admin_wallet_topup(user_id: int, body: WalletTopupRequest, user: dict = Depe
         row = db.get(UserDB, user_id)
         if not row:
             raise HTTPException(status_code=404, detail="ไม่พบ user")
+        balance_before = row.wallet_balance
         row.wallet_balance += body.amount
-        db.add(WalletLedgerDB(
+        ledger = WalletLedgerDB(
             user_id=row.id,
             amount=body.amount,
             reason="topup",
             note=body.note,
             created_by=user["username"],
-        ))
+        )
+        db.add(ledger)
+        db.flush()
+        _add_wallet_event(db, "WalletTopupSuccessful", {
+            "ledger_id": ledger.id,
+            "user_id": row.id,
+            "username": user["username"],
+            "target_username": row.username,
+            "amount": body.amount,
+            "method": "admin_adjustment",
+            "provider": "internal",
+            "note": body.note,
+            "wallet_balance_before": balance_before,
+            "wallet_balance_after": row.wallet_balance,
+            "source": "admin_wallet_topup",
+        })
         db.commit()
         return _serialize_user(row)
     finally:
