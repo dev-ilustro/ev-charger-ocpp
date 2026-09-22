@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EV Charger | System Checklist</title>
+  <style>
+    :root {
+      --ink: #17212b;
+      --muted: #667383;
+      --line: #dfe5eb;
+      --canvas: #f4f7f9;
+      --paper: #ffffff;
+      --blue: #087ea4;
+      --blue-soft: #e8f5f9;
+      --green: #18794e;
+      --green-soft: #e7f6ed;
+      --amber: #a15c00;
+      --amber-soft: #fff4d8;
+      --red: #b42318;
+      --red-soft: #ffebe9;
+      --shadow: 0 8px 24px rgba(24, 45, 64, .07);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--canvas);
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      line-height: 1.45;
+    }
+
+    button, input, select { font: inherit; }
+    button, select { cursor: pointer; }
+    .page { width: min(1180px, calc(100% - 36px)); margin: 0 auto; padding: 34px 0 56px; }
+    .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+    .eyebrow { margin: 0 0 6px; color: var(--blue); font-weight: 700; letter-spacing: .06em; font-size: 12px; text-transform: uppercase; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { margin-bottom: 8px; font-size: clamp(28px, 4vw, 42px); line-height: 1.08; letter-spacing: 0; }
+    .intro { max-width: 760px; margin-bottom: 0; color: var(--muted); font-size: 16px; }
+    .stamp { color: var(--muted); font-size: 12px; white-space: nowrap; }
+
+    .summary-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-bottom: 22px; }
+    .summary-card { min-height: 104px; padding: 16px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .summary-label { color: var(--muted); font-size: 12px; }
+    .summary-value { display: block; margin-top: 10px; font-size: 30px; font-weight: 750; line-height: 1; }
+    .summary-card.done .summary-value { color: var(--green); }
+    .summary-card.partial .summary-value { color: var(--amber); }
+    .summary-card.todo .summary-value { color: var(--red); }
+    .summary-card.priority .summary-value { color: var(--blue); }
+
+    .roadmap { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-bottom: 22px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; box-shadow: var(--shadow); }
+    .roadmap-step { min-height: 106px; padding: 17px 18px; border-right: 1px solid var(--line); }
+    .roadmap-step:last-child { border-right: 0; }
+    .step-number { display: inline-grid; place-items: center; width: 25px; height: 25px; margin-bottom: 10px; border-radius: 50%; color: #fff; background: var(--blue); font-size: 12px; font-weight: 700; }
+    .roadmap-step h3 { margin-bottom: 4px; font-size: 15px; }
+    .roadmap-step p { margin-bottom: 0; color: var(--muted); font-size: 12px; }
+
+    .toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; padding: 12px; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+    .toolbar label { color: var(--muted); font-size: 13px; font-weight: 600; }
+    .toolbar input, .toolbar select { min-height: 38px; padding: 7px 10px; color: var(--ink); background: #fff; border: 1px solid var(--line); border-radius: 6px; }
+    .toolbar input { flex: 1; min-width: 160px; }
+    .toolbar select { min-width: 190px; }
+    .legend { display: flex; align-items: center; gap: 7px; margin-left: auto; color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .dot.done { background: var(--green); }
+    .dot.partial { background: #e09a16; }
+    .dot.todo { background: var(--red); }
+
+    .section-list { display: grid; gap: 12px; }
+    details { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); overflow: hidden; }
+    summary { display: flex; align-items: center; gap: 12px; padding: 17px 18px; list-style: none; cursor: pointer; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; margin-left: auto; color: var(--muted); font-size: 20px; font-weight: 300; }
+    details[open] summary::after { content: "−"; }
+    .section-number { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px; color: var(--blue); background: var(--blue-soft); border-radius: 7px; font-size: 13px; font-weight: 750; }
+    .section-title { flex: 1; }
+    .section-title strong { display: block; font-size: 16px; }
+    .section-title span { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .section-count { color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .section-body { border-top: 1px solid var(--line); }
+    .check-item { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 12px 18px; border-bottom: 1px solid #edf0f3; }
+    .check-item:last-child { border-bottom: 0; }
+    .check-icon { display: grid; place-items: center; width: 20px; height: 20px; margin-top: 1px; border-radius: 50%; font-size: 12px; font-weight: 800; }
+    .check-item.done .check-icon { color: var(--green); background: var(--green-soft); }
+    .check-item.partial .check-icon { color: var(--amber); background: var(--amber-soft); }
+    .check-item.todo .check-icon { color: var(--red); background: var(--red-soft); }
+    .item-text { font-size: 14px; }
+    .item-note { display: block; margin-top: 2px; color: var(--muted); font-size: 12px; }
+    .status { display: inline-flex; align-items: center; min-height: 24px; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .status.done { color: var(--green); background: var(--green-soft); }
+    .status.partial { color: var(--amber); background: var(--amber-soft); }
+    .status.todo { color: var(--red); background: var(--red-soft); }
+    .priority { display: inline-flex; align-items: center; margin-left: 6px; padding: 2px 6px; color: var(--blue); background: var(--blue-soft); border-radius: 4px; font-size: 10px; font-weight: 750; }
+
+    .empty { display: none; padding: 28px; color: var(--muted); text-align: center; background: var(--paper); border: 1px dashed var(--line); border-radius: 8px; }
+    .footer-note { margin-top: 20px; color: var(--muted); font-size: 12px; }
+    @media (max-width: 900px) {
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+      .roadmap { grid-template-columns: repeat(2, 1fr); }
+      .roadmap-step:nth-child(2) { border-right: 0; }
+      .roadmap-step:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+    }
+    @media (max-width: 650px) {
+      .page { width: min(100% - 24px, 1180px); padding-top: 24px; }
+      .topbar { display: block; }
+      .stamp { display: block; margin-top: 12px; }
+      .summary-grid { grid-template-columns: repeat(2, 1fr); }
+      .summary-card:last-child { grid-column: span 2; }
+      .roadmap { grid-template-columns: 1fr; }
+      .roadmap-step, .roadmap-step:nth-child(2) { border-right: 0; border-bottom: 1px solid var(--line); }
+      .roadmap-step:last-child { border-bottom: 0; }
+      .toolbar { align-items: stretch; flex-direction: column; }
+      .toolbar input, .toolbar select { width: 100%; }
+      .legend { margin-left: 0; flex-wrap: wrap; }
+      summary { padding: 14px; }
+      .check-item { grid-template-columns: 22px minmax(0, 1fr); padding: 11px 14px; }
+      .check-item .status { grid-column: 2; justify-self: start; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">EV Charger / System Review</p>
+        <h1>ภาพรวมระบบและรายการที่ยังขาด</h1>
+        <p class="intro">Checklist จากระบบปัจจุบัน แยกให้เห็นว่าอะไรใช้งานได้แล้ว อะไรยังเป็นโหมดทดสอบ และอะไรต้องทำก่อนเชื่อมต่อระบบจริง</p>
+      </div>
+      <div class="stamp">อัปเดตตามโค้ดปัจจุบัน<br />OCPP 1.6J + Wallet + Admin</div>
+    </header>
+
+    <section class="summary-grid" aria-label="สรุปสถานะ">
+      <article class="summary-card"><span class="summary-label">รายการทั้งหมด</span><strong class="summary-value" id="total-count">0</strong></article>
+      <article class="summary-card done"><span class="summary-label">มีแล้ว</span><strong class="summary-value" id="done-count">0</strong></article>
+      <article class="summary-card partial"><span class="summary-label">มีบางส่วน / Mock</span><strong class="summary-value" id="partial-count">0</strong></article>
+      <article class="summary-card todo"><span class="summary-label">ยังขาด</span><strong class="summary-value" id="todo-count">0</strong></article>
+      <article class="summary-card priority"><span class="summary-label">งานเร่งด่วน P0</span><strong class="summary-value" id="p0-count">0</strong></article>
+    </section>
+
+    <section class="roadmap" aria-label="ลำดับการทำงาน">
+      <article class="roadmap-step"><span class="step-number">1</span><h3>กำหนด DB หลัก</h3><p>ให้ทุกสภาพแวดล้อมชี้ไปข้อมูลชุดเดียวและมี Backup</p></article>
+      <article class="roadmap-step"><span class="step-number">2</span><h3>ล็อกสิทธิ์ User/Admin</h3><p>แยกหน้าที่และป้องกัน API ฝั่งผู้ดูแล</p></article>
+      <article class="roadmap-step"><span class="step-number">3</span><h3>ต่อ Omise จริง</h3><p>Payment, Webhook, Wallet Ledger และป้องกันเติมซ้ำ</p></article>
+      <article class="roadmap-step"><span class="step-number">4</span><h3>ขึ้น Production</h3><p>WSS, Secret, Monitoring และทดสอบเครื่องจริง</p></article>
+    </section>
+
+    <section class="toolbar" aria-label="ตัวกรองรายการ">
+      <label for="status-filter">แสดง</label>
+      <select id="status-filter">
+        <option value="all">ทั้งหมด</option>
+        <option value="done">มีแล้ว</option>
+        <option value="partial">มีบางส่วน / Mock</option>
+        <option value="todo">ยังขาด</option>
+        <option value="p0">เฉพาะงาน P0</option>
+      </select>
+      <input id="search-input" type="search" placeholder="ค้นหา เช่น Omise, Wallet, OCPP, Admin" />
+      <div class="legend"><span class="dot done"></span>มีแล้ว <span class="dot partial"></span>บางส่วน <span class="dot todo"></span>ยังขาด</div>
+    </section>
+
+    <section class="section-list" id="section-list">
+      <details open data-section>
+        <summary><span class="section-number">01</span><span class="section-title"><strong>การรันระบบและฐานข้อมูล</strong><span>Server, Docker, SQLite และ Backup</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">FastAPI, Uvicorn และ Health Check API</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Dockerfile และ Docker Compose</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item partial" data-status="partial"><span class="check-icon">!</span><span class="item-text">SQLite Database<span class="item-note">มีใช้งานแล้ว แต่ปัจจุบันมีหลายไฟล์และอาจเปิดผิดชุด</span></span><span class="status partial">ต้องกำหนดหลัก</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">กำหนด DATA_DIR และสคริปต์เลือก DB</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Auto Backup และ Manual Backup</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">กำหนด DB กลางสำหรับ Production<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">แจ้งเตือนเมื่อ Backup ล้มเหลว และมีแผน Restore</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details open data-section>
+        <summary><span class="section-number">02</span><span class="section-title"><strong>Login และบัญชีผู้ใช้</strong><span>Customer, Staff, Admin และสิทธิ์การเข้าถึง</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Login, Logout, Register และ JWT Cookie</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Role: customer, staff, admin</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Admin สร้าง แก้ไข และปิดใช้งาน User</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item partial" data-status="partial"><span class="check-icon">!</span><span class="item-text">แยกสิทธิ์ User/Admin ที่ Backend<span class="item-note">มี Role Guard แล้ว แต่ประสบการณ์หน้า Login ยังใช้โครงสร้างร่วมกัน</span></span><span class="status partial">บางส่วน</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">MFA/OTP และ Rate Limit สำหรับ Admin<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">Reset Password, Email Verification และ Session Revocation</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details open data-section>
+        <summary><span class="section-number">03</span><span class="section-title"><strong>Wallet และการเงิน</strong><span>ยอดเงิน, Ledger, เติมเงิน และหักค่าชาร์จ</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">แสดงยอด Wallet และตั้งงบประมาณต่อรอบชาร์จ</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Admin เติมเงิน และมี Wallet Ledger</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">หักเงินตาม kWh เมื่อจบการชาร์จ</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item partial" data-status="partial"><span class="check-icon">!</span><span class="item-text">Mock Top-up สำหรับทดสอบ<span class="item-note">ยังไม่ใช่เงินที่ผ่าน Payment Gateway จริง</span></span><span class="status partial">Mock</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">Payment Record, Payment ID และป้องกันเติมเงินซ้ำ<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">Refund, ใบเสร็จ และกระทบยอดเงิน</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details open data-section>
+        <summary><span class="section-number">04</span><span class="section-title"><strong>Omise / Opn Payments</strong><span>ส่วนที่ผู้บริหารต้องเห็นภาพการเชื่อมต่อจริง</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Mockup Flow: สร้างรายการ, Pending, Successful, Expired</span><span class="status done">Mockup มีแล้ว</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">เชื่อม Omise API เพื่อสร้าง Charge/Source จริง<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">Webhook, ตรวจสอบสถานะ และป้องกัน Webhook ซ้ำ<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">Retry, Expired Handling, Refund และ Reconciliation</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details data-section>
+        <summary><span class="section-number">05</span><span class="section-title"><strong>OCPP และเครื่องชาร์จ</strong><span>การเชื่อมต่อสถานีและคำสั่งควบคุม</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">OCPP 1.6J ผ่าน WebSocket</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">BootNotification, Heartbeat และ StatusNotification</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Authorize, StartTransaction, StopTransaction และ MeterValues</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Remote Start/Stop, Unlock, Reset และ Change Availability</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">อ่าน/แก้ Configuration และบันทึก Event Log</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item partial" data-status="partial"><span class="check-icon">!</span><span class="item-text">RFID และ Virtual Card<span class="item-note">มี Logic และหน้า Admin แล้ว แต่ต้องทดสอบกับเครื่องจริง</span></span><span class="status partial">บางส่วน</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">ทดสอบกับเครื่องจริงหลายรุ่น + WSS/TLS + OCPP Authentication<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">แจ้งเตือนเครื่อง Offline/Error และรองรับหลาย Connector</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details data-section>
+        <summary><span class="section-number">06</span><span class="section-title"><strong>การคำนวณค่าชาร์จ</strong><span>Energy, ราคา, Budget และ Auto Stop</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">คำนวณพลังงาน kWh และราคาต่อหน่วย</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">แสดงค่าใช้จ่ายระหว่างชาร์จ และหักเงินตอนจบ Session</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item partial" data-status="partial"><span class="check-icon">!</span><span class="item-text">Auto Stop เมื่อถึง Budget<span class="item-note">ทำงานตามรอบ MeterValues จึงไม่ใช่ Real-time 100%</span></span><span class="status partial">บางส่วน</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">คำนวณเวลาจนเต็ม, Battery SOC และราคาแบบหลายเงื่อนไข</span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">Reservation และ Pre-authorization ก่อนเริ่มชาร์จ</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details data-section>
+        <summary><span class="section-number">07</span><span class="section-title"><strong>RFID</strong><span>บัตร, การผูก User และประวัติการแตะ</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">สร้าง แก้ไข ปิดใช้งาน และผูก RFID กับ User</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">บันทึกประวัติการแตะบัตร และตรวจยอดก่อนชาร์จ</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item partial" data-status="partial"><span class="check-icon">!</span><span class="item-text">ออกบัตรจริงและทดสอบกับ Charger จริง</span><span class="status partial">บางส่วน</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">จัดการบัตรหาย/เปลี่ยนบัตร และแจ้งเตือนการใช้ผิดปกติ</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details data-section>
+        <summary><span class="section-number">08</span><span class="section-title"><strong>หน้าจอระบบ</strong><span>หน้าที่มีอยู่จริงและหน้าที่เป็น Mockup</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Login, Register, Home/User Dashboard และประวัติชาร์จ</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Admin Dashboard, Users, RFID, Charger, Settings และ Backup</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item partial" data-status="partial"><span class="check-icon">!</span><span class="item-text">Mockup Flow สำหรับนำเสนอ<span class="item-note">ไฟล์ mockup.html เป็นภาพจำลอง ไม่ได้เรียก Omise หรือ API จริง</span></span><span class="status partial">Mockup</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">Payment History, ใบเสร็จ และ Dashboard รายได้</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+
+      <details data-section>
+        <summary><span class="section-number">09</span><span class="section-title"><strong>ความปลอดภัยและ Production</strong><span>สิ่งที่ต้องทำก่อนเปิดใช้งานจริง</span></span><span class="section-count"></span></summary>
+        <div class="section-body">
+          <div class="check-item done" data-status="done"><span class="check-icon">✓</span><span class="item-text">Password Hashing, Role Authorization และ Backup</span><span class="status done">มีแล้ว</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">เปลี่ยน Default Admin Password และตั้ง JWT Secret จริง<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo" data-priority="p0"><span class="check-icon">!</span><span class="item-text">บังคับ HTTPS/WSS และเพิ่ม OCPP Basic Authentication<span class="priority">P0</span></span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">จำกัด CORS, Audit Log ของ Admin, Monitoring และ Alerting</span><span class="status todo">ยังขาด</span></div>
+          <div class="check-item todo" data-status="todo"><span class="check-icon">!</span><span class="item-text">Automated Test, Integration Test และ CI/CD</span><span class="status todo">ยังขาด</span></div>
+        </div>
+      </details>
+    </section>
+
+    <p class="footer-note">ข้อสรุป: ระบบ OCPP, User/Admin, Wallet และหน้า Admin มีโครงสร้างแล้ว ส่วนงานหลักที่ต้องทำต่อคือ DB Production, Omise จริง, Payment Ledger, Security และการทดสอบกับเครื่องจริง</p>
+    <div class="empty" id="empty-state">ไม่พบรายการที่ตรงกับตัวกรอง</div>
+  </main>
+
+  <script>
+    const items = [...document.querySelectorAll(".check-item")];
+    const sections = [...document.querySelectorAll("[data-section]")];
+    const statusFilter = document.getElementById("status-filter");
+    const searchInput = document.getElementById("search-input");
+
+    function refreshSummary() {
+      const count = (status) => items.filter((item) => item.dataset.status === status).length;
+      document.getElementById("total-count").textContent = items.length;
+      document.getElementById("done-count").textContent = count("done");
+      document.getElementById("partial-count").textContent = count("partial");
+      document.getElementById("todo-count").textContent = count("todo");
+      document.getElementById("p0-count").textContent = items.filter((item) => item.dataset.priority === "p0").length;
+    }
+
+    function filterItems() {
+      const selected = statusFilter.value;
+      const query = searchInput.value.trim().toLowerCase();
+      let visibleCount = 0;
+
+      sections.forEach((section) => {
+        const sectionItems = [...section.querySelectorAll(".check-item")];
+        let sectionVisible = 0;
+        sectionItems.forEach((item) => {
+          const matchesStatus = selected === "all" || (selected === "p0" ? item.dataset.priority === "p0" : item.dataset.status === selected);
+          const matchesQuery = !query || item.textContent.toLowerCase().includes(query) || section.querySelector(".section-title").textContent.toLowerCase().includes(query);
+          const visible = matchesStatus && matchesQuery;
+          item.hidden = !visible;
+          if (visible) { sectionVisible += 1; visibleCount += 1; }
+        });
+        section.hidden = sectionVisible === 0;
+        const countEl = section.querySelector(".section-count");
+        countEl.textContent = `${sectionVisible}/${sectionItems.length} รายการ`;
+        if (query && sectionVisible > 0) section.open = true;
+      });
+
+      document.getElementById("empty-state").style.display = visibleCount ? "none" : "block";
+    }
+
+    refreshSummary();
+    filterItems();
+    statusFilter.addEventListener("change", filterItems);
+    searchInput.addEventListener("input", filterItems);
+  </script>
+</body>
+</html>
