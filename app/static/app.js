@@ -99,7 +99,7 @@ async function initAuth() {
 
   if (me.role === "customer") {
     document.getElementById("wallet-card").style.display = "block";
-    document.getElementById("wallet-home-summary").style.display = "grid";
+    document.getElementById("wallet-home-summary").style.display = "block";
     renderWalletCard(me.wallet_balance, me.next_session_budget);
   }
 }
@@ -230,7 +230,7 @@ function renderMockQr(reference) {
     for (let x = 0; x < 15; x += 1) {
       const finder = inFinder(x, y, 0, 0) ?? inFinder(x, y, 10, 0) ?? inFinder(x, y, 0, 10);
       const on = finder === null ? ((x * 17 + y * 31 + seed) % 7 < 3) : finder;
-      cells.push(`<span class="qr-cell ${on ? "on" : ""}"></span>`);
+      cells.push(`<span class="${on ? "on" : ""}"></span>`);
     }
   }
   qr.innerHTML = cells.join("");
